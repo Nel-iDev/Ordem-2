@@ -7,9 +7,12 @@ import { CreationPage } from './pages/CreationPage'
 import { SheetPage } from './pages/SheetPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
+// BASE_URL vem do `base` do Vite: "/Ordem-2/" no GitHub Pages, "/" em dev.
+const basename = import.meta.env.BASE_URL.replace(/\/+$/, '') || undefined
+
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <ToastProvider>
         <CharactersProvider>
           <Routes>

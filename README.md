@@ -47,6 +47,22 @@ src/
   types.ts      # tipos do domínio
 ```
 
+## Deploy no GitHub Pages
+
+O deploy é automático pelo workflow `.github/workflows/deploy.yml` a cada push na `main`. Ele
+roda lint e testes, gera o build e publica `dist/`.
+
+**Configuração necessária uma única vez:** em *Settings → Pages → Build and deployment*, defina
+a **Source** como **GitHub Actions**. A opção "Deploy from a branch" serve o código-fonte cru e
+não funciona com Vite.
+
+O site fica em `https://<usuario>.github.io/Ordem-2/`. Por isso o build usa `base: '/Ordem-2/'`
+e o `BrowserRouter` recebe `basename` a partir de `import.meta.env.BASE_URL`. Para publicar em
+domínio próprio ou na raiz, rode o build com `VITE_BASE="/"`.
+
+O workflow copia `dist/index.html` para `dist/404.html`, o que permite abrir ou recarregar
+rotas como `/ficha/:id` diretamente no Pages.
+
 ## Armazenamento local
 
 As fichas ficam em `localStorage` sob a chave `arquivo2.characters.v1` e as rolagens em
