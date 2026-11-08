@@ -164,7 +164,12 @@ function SheetView({ id }: { id: string }) {
   }
 
   const removeAbility = (abilityId: string) => {
-    update({ abilities: character.abilities.filter((ability) => ability.id !== abilityId) })
+    const skillChoices = { ...character.abilityState.skillChoices }
+    delete skillChoices[abilityId]
+    update({
+      abilities: character.abilities.filter((ability) => ability.id !== abilityId),
+      abilityState: { ...character.abilityState, skillChoices },
+    })
   }
 
   const setInventory = (inventory: InventoryItem[]) => update({ inventory })
@@ -288,9 +293,10 @@ function SheetView({ id }: { id: string }) {
 
           {tab === 'abilities' ? (
             <AbilityList
-              abilities={character.abilities}
+              character={character}
               onAdd={addAbility}
               onRemove={removeAbility}
+              onChange={update}
             />
           ) : null}
 

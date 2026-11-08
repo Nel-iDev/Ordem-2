@@ -1,5 +1,6 @@
 import { Brain, Heart, Minus, Plus, Zap } from 'lucide-react'
 import type { Character } from '../../types'
+import { hasMechanic } from '../../lib/abilities'
 import { clamp } from '../../lib/utils'
 
 interface VitalsProps {
@@ -146,7 +147,7 @@ export function Vitals({ character, onChange }: VitalsProps) {
         </div>
       </article>
 
-      {character.profile === 'executor' ? (
+      {hasMechanic(character, 'impeto') ? (
         <article className="vital vital-impeto">
           <header className="vital-head">
             <span className="vital-label">
@@ -181,8 +182,12 @@ export function Vitals({ character, onChange }: VitalsProps) {
             })}
           </div>
           <p className="small muted">
-            Falhas preenchem 1 espaço. Gaste 1 para +d4 ou 3 para +1 passo de atributo na cena.
+            Falhas preenchem 1 espaço. Gaste 1 para +d4 ou 3 para +1 passo de atributo na
+            cena.
           </p>
+          {character.abilityState.impetoAttrBuff ? (
+            <span className="badge badge-accent">Bônus de atributo ativo</span>
+          ) : null}
         </article>
       ) : null}
     </div>

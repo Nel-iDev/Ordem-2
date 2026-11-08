@@ -3459,3 +3459,109 @@ img {
   }
 }
 
+
+/* ==========================================================================
+   Habilidades automatizadas
+   ========================================================================== */
+
+.ability-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ability-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  padding: 1px 6px;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ability-status.active {
+  border-color: rgba(74, 222, 128, 0.55);
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--ok);
+}
+
+.ability-status.ready {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.ability-status.unmet {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+}
+
+.ability-status.used,
+.ability-status.passive {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+  color: var(--muted);
+}
+
+.ability-detail {
+  color: var(--text) !important;
+  font-size: 0.78rem !important;
+}
+
+.ability-requirement {
+  color: var(--danger) !important;
+  font-size: 0.74rem !important;
+}
+
+.ability-hint {
+  color: var(--muted-2) !important;
+  font-size: 0.7rem !important;
+  line-height: 1.4 !important;
+}
+
+.ability-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.ability-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ability-control-row .select {
+  flex: 1 1 130px;
+  min-width: 110px;
+}
+
+.ability-controls .field {
+  margin: 0;
+}
+
+.skill-die {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.skill-die .badge {
+  padding: 0 4px;
+  font-size: 0.52rem;
+}
+
+.roll-option-info strong svg {
+  vertical-align: -2px;
+}

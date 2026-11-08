@@ -8,6 +8,7 @@ import type {
   SkillId,
 } from '../../types'
 import { APTITUDES, ATTRIBUTES, ATTR_LABEL, SKILLS } from '../../data/skills'
+import { effectiveSkillDie } from '../../lib/abilities'
 import { DieIcon } from '../DieIcon'
 import { DieStep } from '../ui/DieStep'
 
@@ -56,7 +57,9 @@ export function SkillList({
                 </td>
               </tr>
               {SKILLS.filter((skill) => skill.attr === attribute.key).map((skill) => {
-                const die = character.skills[skill.id]
+                const baseDie = character.skills[skill.id]
+                const die = effectiveSkillDie(character, skill.id)
+                const boosted = die !== baseDie
                 const rollable: RollableSkill = {
                   id: skill.id,
                   name: skill.name,
@@ -70,7 +73,9 @@ export function SkillList({
                       <button
                         type="button"
                         className="skill-name-btn"
-                        title={`${skill.description} (${die})`}
+                        title={`${skill.description} (${die}${
+                          boosted ? `, base ${baseDie} + habilidade` : ''
+                        })`}
                         onClick={() => onRoll(rollable)}
                       >
                         {skill.name}
@@ -85,12 +90,20 @@ export function SkillList({
                       <span className="skill-die">
                         <DieIcon die={die} attr={attribute.key} size={19} />
                         {die}
+                        {boosted ? (
+                          <span
+                            className="badge badge-accent"
+                            title={`Habilidade eleva a base ${baseDie} para ${die}`}
+                          >
+                            hab.
+                          </span>
+                        ) : null}
                       </span>
                     </td>
                     <td>
                       <div className="skill-row-actions">
                         <DieStep
-                          die={die}
+                          die={baseDie}
                           label={skill.name}
                           onChange={(next) => onSkillDie(skill.id, next)}
                         />

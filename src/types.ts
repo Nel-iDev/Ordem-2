@@ -76,6 +76,37 @@ export interface Ability {
   mechanic?: AbilityMechanic
 }
 
+/**
+ * Estado mutável das habilidades na ficha. Fica separado das definições em
+ * `data/` para que o mesmo perfil/ocupação possa ser compartilhado sem que
+ * escolhas e cargas de um personagem vazem para outro.
+ */
+export interface AbilityState {
+  /** Perícia escolhida em habilidades de elevação (ex.: Conhecimento Técnico). */
+  skillChoices: Record<string, SkillId>
+  /** Cargas de bônus d4 da Avaliação (0 a 2). */
+  avaliacaoCharges: number
+  /** Alvo observado para a Avaliação. */
+  avaliacaoTarget: string
+  /** Bônus temporário de atributo do Ímpeto (3 espaços). */
+  impetoAttrBuff: { attr: AttrKey; steps: number } | null
+  /** Prontidão já ativada no conflito atual. */
+  prontidaoUsed: boolean
+}
+
+/**
+ * Ajuda gerada pela habilidade Mentoria. Fica fora da ficha porque o bônus é
+ * consumido por outro personagem, no teste do aliado ajudado.
+ */
+export interface MentoriaHelp {
+  id: string
+  helperId: string
+  helperName: string
+  skillName: string
+  ra: number
+  createdAt: number
+}
+
 export interface ProfileDef {
   id: ProfileId
   name: string
@@ -131,6 +162,7 @@ export interface Character {
   pd: { current: number; max: number }
   impeto: { max: number; filled: number }
   abilities: Ability[]
+  abilityState: AbilityState
   inventory: InventoryItem[]
   appearance: string
   personality: string

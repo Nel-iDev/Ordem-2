@@ -1,4 +1,5 @@
-import type { Character, RollRecord } from '../types'
+import type { Character, MentoriaHelp, RollRecord } from '../types'
+import { normalizeAbilityState } from './abilities'
 import {
   createEmptyCharacter,
   createId,
@@ -9,6 +10,7 @@ import { dieMax } from './dice'
 
 const CHARACTER_KEY = 'arquivo2.characters.v1'
 const ROLL_KEY = 'arquivo2.rolls.v1'
+const MENTORIA_KEY = 'arquivo2.mentoria.v1'
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback
@@ -90,6 +92,7 @@ export function normalizeCharacter(input: Partial<Character>): Character {
       max: pdMax,
     },
     impeto: { ...base.impeto, ...(input.impeto ?? {}) },
+    abilityState: normalizeAbilityState(input.abilityState),
     inventory: Array.isArray(input.inventory) ? input.inventory : [],
     conditions: Array.isArray(input.conditions) ? input.conditions : [],
     abilities:
@@ -134,6 +137,52 @@ export function upsertCharacter(character: Character) {
 
 export function deleteCharacter(id: string) {
   saveCharacters(loadCharacters().filter((character) => character.id !== id))
+  clearMentoriaHelps(id)
+}
+
+function isMentoriaHelp(value: unknown): value is MentoriaHelp {
+  if (!value || typeof value !== 'object') return false
+  const help = value as Partial<MentoriaHelp>
+  return (
+    typeof help.id === 'string' &&
+    typeof help.helperId === 'string' &&
+    typeof help.helperName === 'string' &&
+    typeof help.skillName === 'string' &&
+    Number.isFinite(help.ra) &&
+    Number.isFinite(help.createdAt)
+  )
+}
+
+export function loadMentoriaHelps(): MentoriaHelp[] {
+  const raw = safeParse<unknown>(readStorage(MENTORIA_KEY), [])
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter(isMentoriaHelp)
+    .map((help) => ({
+      ...help,
+      ra: Math.min(20, Math.max(1, Math.floor(help.ra))),
+    }))
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 20)
+}
+
+export function addMentoriaHelp(help: MentoriaHelp) {
+  const helps = [help, ...loadMentoriaHelps()].slice(0, 20)
+  localStorage.setItem(MENTORIA_KEY, JSON.stringify(helps))
+}
+
+export function consumeMentoriaHelp(id: string) {
+  const helps = loadMentoriaHelps().filter((help) => help.id !== id)
+  localStorage.setItem(MENTORIA_KEY, JSON.stringify(helps))
+}
+
+export function clearMentoriaHelps(characterId?: string) {
+  if (!characterId) {
+    localStorage.setItem(MENTORIA_KEY, JSON.stringify([]))
+    return
+  }
+  const helps = loadMentoriaHelps().filter((help) => help.helperId !== characterId)
+  localStorage.setItem(MENTORIA_KEY, JSON.stringify(helps))
 }
 
 export function duplicateCharacter(character: Character): Character {

@@ -1,5 +1,6 @@
 import type { AttrKey, Character, Die } from '../../types'
 import { ATTRIBUTES, ATTR_LABEL } from '../../data/skills'
+import { attributeBuffSteps, effectiveAttributeDie } from '../../lib/abilities'
 import { stepDie } from '../../lib/dice'
 import { DieIcon } from '../DieIcon'
 import { DieStep } from '../ui/DieStep'
@@ -16,7 +17,9 @@ export function AttributeList({ character, penalties, onChange }: AttributeListP
       {ATTRIBUTES.map((attribute) => {
         const die = character.attributes[attribute.key]
         const penalty = penalties[attribute.key] ?? 0
-        const effective = stepDie(die, -penalty)
+        const buff = attributeBuffSteps(character, attribute.key)
+        const buffed = effectiveAttributeDie(character, attribute.key)
+        const effective = stepDie(buffed, -penalty)
         return (
           <article
             className={`attr-card attr-card-${attribute.key}`}
@@ -29,9 +32,9 @@ export function AttributeList({ character, penalties, onChange }: AttributeListP
               <strong>{effective}</strong>
             </div>
             <span className={`attr-card-base${penalty > 0 ? ' penalized' : ''}`}>
-              {penalty > 0
-                ? `base ${die} · −${penalty} passo${penalty > 1 ? 's' : ''}`
-                : `base ${die}`}
+              {`base ${die}`}
+              {buff > 0 ? ` · +${buff} Ímpeto` : ''}
+              {penalty > 0 ? ` · −${penalty} passo${penalty > 1 ? 's' : ''}` : ''}
             </span>
             <DieStep
               die={die}

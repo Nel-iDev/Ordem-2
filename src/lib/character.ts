@@ -11,6 +11,7 @@ import type {
   RollableSkill,
   SkillId,
 } from '../types'
+import { defaultAbilityState, effectiveRollableDie, normalizeAbilityState } from './abilities'
 import { dieCost, dieMax } from './dice'
 
 export const ATTR_BUDGET = 8
@@ -120,6 +121,7 @@ export function createEmptyCharacter(overrides: Partial<Character> = {}): Charac
     pd: { current: 6, max: 6 },
     impeto: { max: 3, filled: 0 },
     abilities: [],
+    abilityState: defaultAbilityState(),
     inventory: [],
     appearance: '',
     personality: '',
@@ -133,6 +135,7 @@ export function createEmptyCharacter(overrides: Partial<Character> = {}): Charac
     ...base,
     ...overrides,
     attributes: { ...base.attributes, ...(overrides.attributes ?? {}) },
+    abilityState: normalizeAbilityState(overrides.abilityState ?? base.abilityState),
     resourcePoints:
       overrides.resourcePoints ?? defaultResourcePoints(overrides.level ?? base.level),
   }
@@ -210,25 +213,21 @@ export function getRollableSkills(character: Character): RollableSkill[] {
     id: skill.id,
     name: skill.name,
     attr: skill.attr,
-    die: character.skills[skill.id],
+    die: effectiveRollableDie(character, skill.id),
     kind: 'skill' as const,
   }))
   const aptitudes = APTITUDES.map((aptitude) => ({
     id: `aptidao-${aptitude.id}`,
     name: `Aptidão (${aptitude.name})`,
     attr: 'mente' as AttrKey,
-    die: character.aptitudes[aptitude.id],
+    die: effectiveRollableDie(character, `aptidao-${aptitude.id}`),
     kind: 'aptitude' as const,
   }))
   return [...base, ...aptitudes]
 }
 
 export function getSkillDie(character: Character, rollableId: string): Die {
-  if (rollableId.startsWith('aptidao-')) {
-    const id = rollableId.replace('aptidao-', '') as AptitudeId
-    return character.aptitudes[id] ?? 'd4'
-  }
-  return character.skills[rollableId as SkillId] ?? 'd4'
+  return effectiveRollableDie(character, rollableId)
 }
 
 export function conditionStep(character: Character, attr: AttrKey): number {

@@ -2,12 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RollRecord } from '../types'
 import { createEmptyCharacter } from './character'
 import {
+  addMentoriaHelp,
   addRoll,
+  clearMentoriaHelps,
   clearRolls,
+  consumeMentoriaHelp,
   deleteCharacter,
   duplicateCharacter,
   getCharacter,
   loadCharacters,
+  loadMentoriaHelps,
   loadRolls,
   normalizeCharacter,
   parseImportedCharacters,
@@ -79,6 +83,32 @@ describe('armazenamento', () => {
     expect(Object.keys(character.aptitudes)).toHaveLength(6)
     expect(character.abilities.length).toBe(2)
     expect(character.pv.max).toBeGreaterThan(0)
+    expect(character.abilityState).toEqual({
+      skillChoices: {},
+      avaliacaoCharges: 0,
+      avaliacaoTarget: '',
+      impetoAttrBuff: null,
+      prontidaoUsed: false,
+    })
+  })
+
+  it('normaliza o estado de habilidades de fichas antigas', () => {
+    const character = normalizeCharacter({
+      name: 'Helena',
+      abilityState: {
+        skillChoices: { habilidade: 'pesquisa' },
+        avaliacaoCharges: 7,
+        avaliacaoTarget: 'Criatura',
+        impetoAttrBuff: { attr: 'fisico', steps: 1 },
+        prontidaoUsed: true,
+      },
+    })
+
+    expect(character.abilityState.avaliacaoCharges).toBe(2)
+    expect(character.abilityState.avaliacaoTarget).toBe('Criatura')
+    expect(character.abilityState.skillChoices).toEqual({ habilidade: 'pesquisa' })
+    expect(character.abilityState.impetoAttrBuff).toEqual({ attr: 'fisico', steps: 1 })
+    expect(character.abilityState.prontidaoUsed).toBe(true)
   })
 
   it('salva, carrega e atualiza fichas', () => {
@@ -138,5 +168,26 @@ describe('armazenamento', () => {
     clearRolls('char-1')
     expect(loadRolls('char-1')).toHaveLength(0)
     expect(loadRolls()).toHaveLength(1)
+  })
+
+  it('registra, consome e limpa ajudas de Mentoria', () => {
+    const help = {
+      id: 'help-1',
+      helperId: 'char-1',
+      helperName: 'Helena',
+      skillName: 'Luta',
+      ra: 5,
+      createdAt: 1000,
+    }
+
+    addMentoriaHelp(help)
+    expect(loadMentoriaHelps()).toEqual([help])
+
+    consumeMentoriaHelp(help.id)
+    expect(loadMentoriaHelps()).toHaveLength(0)
+
+    addMentoriaHelp(help)
+    clearMentoriaHelps('char-1')
+    expect(loadMentoriaHelps()).toHaveLength(0)
   })
 })
