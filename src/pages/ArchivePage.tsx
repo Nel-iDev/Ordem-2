@@ -96,7 +96,7 @@ export function ArchivePage() {
   return (
     <div className="container">
       <section className="archive-hero">
-        <span className="eyebrow">Dossiê de campo · uso restrito</span>
+        <span className="eyebrow">Ordem 2 · dossiê de campo</span>
         <h1>
           Arquivo de <span style={{ color: 'var(--accent)' }}>agentes</span>
         </h1>
@@ -135,6 +135,7 @@ export function ArchivePage() {
           <span>
             <strong>{profilesUsed}</strong> perfil{profilesUsed === 1 ? '' : 's'} em uso
           </span>
+          <span>Playtest · PV/PD por atributo + nível</span>
           <span>Armazenamento local do navegador</span>
         </div>
       </section>

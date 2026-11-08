@@ -28,7 +28,7 @@ import type {
   SkillId,
 } from '../types'
 import { PROFILE_BY_ID } from '../data/profiles'
-import { conditionStep } from '../lib/character'
+import { conditionStep, syncResourceTotals } from '../lib/character'
 import { getCharacter } from '../lib/storage'
 import { downloadJson, slugify } from '../lib/utils'
 import { useCharacters } from '../context/characters'
@@ -36,6 +36,7 @@ import { useToast } from '../context/toast'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 import { Avatar } from '../components/character/Avatar'
 import { Vitals } from '../components/character/Vitals'
+import { ResourcePlanner } from '../components/character/ResourcePlanner'
 import { AttributeList } from '../components/character/AttributeList'
 import { SkillList } from '../components/character/SkillList'
 import { ConditionList } from '../components/character/ConditionList'
@@ -46,13 +47,13 @@ import { RollDialog } from '../components/rolls/RollDialog'
 import { RollHistory } from '../components/rolls/RollHistory'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
-type TabId = 'skills' | 'abilities' | 'inventory' | 'notes' | 'history'
+type TabId = 'skills' | 'abilities' | 'inventory' | 'description' | 'history'
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'skills', label: 'Perícias' },
   { id: 'abilities', label: 'Habilidades' },
   { id: 'inventory', label: 'Inventário' },
-  { id: 'notes', label: 'Anotações' },
+  { id: 'description', label: 'Descrição' },
   { id: 'history', label: 'Histórico' },
 ]
 
@@ -110,10 +111,21 @@ function SheetView({ id }: { id: string }) {
   }
 
   const profile = PROFILE_BY_ID[character.profile]
-  const accent = profile?.accent ?? '#ff4d4d'
+  const accent = profile?.accent ?? '#a347ff'
 
   const update = (patch: Partial<Character>) => {
     setCharacter((current) => (current ? { ...current, ...patch } : current))
+  }
+
+  const changeAttr = (attr: AttrKey, die: Die) => {
+    setCharacter((current) =>
+      current
+        ? syncResourceTotals({
+            ...current,
+            attributes: { ...current.attributes, [attr]: die },
+          })
+        : current,
+    )
   }
 
   const handleRollSave = (next: Character) => {
@@ -159,7 +171,7 @@ function SheetView({ id }: { id: string }) {
   const setConditions = (conditions: Condition[]) => update({ conditions })
 
   return (
-    <div className="container">
+    <div className="container sheet-page">
       <div className="sheet-head" style={{ '--sheet-accent': accent } as CSSProperties}>
         <div className="sheet-head-main">
           <Avatar name={character.name} portrait={character.portrait} size="lg" />
@@ -220,94 +232,85 @@ function SheetView({ id }: { id: string }) {
         </div>
       </div>
 
-      <div className="sheet-layout">
-        <div className="sheet-col">
-          <Panel title="Recursos" icon={<Heart size={15} aria-hidden="true" />}>
-            <Vitals character={character} onChange={update} />
-          </Panel>
+      <div className="sheet-summary">
+        <Panel title="Atributos" icon={<Activity size={15} aria-hidden="true" />}>
+          <AttributeList character={character} penalties={penalties} onChange={changeAttr} />
+        </Panel>
 
-          <Panel title="Atributos" icon={<Activity size={15} aria-hidden="true" />}>
-            <AttributeList
+        <Panel title="Recursos" icon={<Heart size={15} aria-hidden="true" />}>
+          <Vitals character={character} onChange={update} />
+          <div className="panel-divider" />
+          <ResourcePlanner character={character} onChange={update} compact />
+        </Panel>
+
+        <Panel title="Condições" icon={<AlertTriangle size={15} aria-hidden="true" />}>
+          <ConditionList character={character} onChange={setConditions} />
+        </Panel>
+      </div>
+
+      <section className="panel sheet-tab-panel">
+        <div className="panel-head sheet-tab-head">
+          <span className="panel-title">
+            <FileText size={15} aria-hidden="true" /> Ficha
+          </span>
+          <span className="small muted">Clique em uma perícia para rolar</span>
+        </div>
+        <div className="sheet-tabs" role="tablist" aria-label="Seções da ficha">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              className={`sheet-tab${tab === item.id ? ' active' : ''}`}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+              {item.id === 'abilities' ? ` (${character.abilities.length})` : null}
+              {item.id === 'inventory' ? ` (${character.inventory.length})` : null}
+            </button>
+          ))}
+        </div>
+        <div className="panel-body sheet-tab-body">
+          {tab === 'skills' ? (
+            <SkillList
               character={character}
               penalties={penalties}
-              onChange={(attr, die) =>
-                update({ attributes: { ...character.attributes, [attr]: die } })
+              onSkillDie={(skillId: SkillId, die: Die) =>
+                update({ skills: { ...character.skills, [skillId]: die } })
               }
+              onAptitudeDie={(aptitudeId: AptitudeId, die: Die) =>
+                update({ aptitudes: { ...character.aptitudes, [aptitudeId]: die } })
+              }
+              onRoll={setRolling}
             />
-          </Panel>
+          ) : null}
 
-          <Panel title="Condições" icon={<AlertTriangle size={15} aria-hidden="true" />}>
-            <ConditionList character={character} onChange={setConditions} />
-          </Panel>
+          {tab === 'abilities' ? (
+            <AbilityList
+              abilities={character.abilities}
+              onAdd={addAbility}
+              onRemove={removeAbility}
+            />
+          ) : null}
+
+          {tab === 'inventory' ? (
+            <InventoryList items={character.inventory} onChange={setInventory} />
+          ) : null}
+
+          {tab === 'description' ? (
+            <NotesPanel character={character} onChange={update} />
+          ) : null}
+
+          {tab === 'history' ? (
+            <RollHistory
+              characterId={character.id}
+              reloadToken={rollVersion}
+              onCleared={() => setRollVersion((current) => current + 1)}
+            />
+          ) : null}
         </div>
-
-        <div className="sheet-col">
-          <div className="panel">
-            <div className="panel-head">
-              <span className="panel-title">
-                <FileText size={15} aria-hidden="true" /> Ficha
-              </span>
-              <span className="small muted">Clique em uma perícia para rolar</span>
-            </div>
-            <div className="tabs" role="tablist" aria-label="Seções da ficha">
-              {TABS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === item.id}
-                  className={`tab${tab === item.id ? ' active' : ''}`}
-                  onClick={() => setTab(item.id)}
-                >
-                  {item.label}
-                  {item.id === 'abilities' ? ` (${character.abilities.length})` : null}
-                  {item.id === 'inventory' ? ` (${character.inventory.length})` : null}
-                </button>
-              ))}
-            </div>
-            <div className="panel-body">
-              {tab === 'skills' ? (
-                <SkillList
-                  character={character}
-                  penalties={penalties}
-                  onSkillDie={(skillId: SkillId, die: Die) =>
-                    update({ skills: { ...character.skills, [skillId]: die } })
-                  }
-                  onAptitudeDie={(aptitudeId: AptitudeId, die: Die) =>
-                    update({ aptitudes: { ...character.aptitudes, [aptitudeId]: die } })
-                  }
-                  onRoll={setRolling}
-                />
-              ) : null}
-
-              {tab === 'abilities' ? (
-                <AbilityList
-                  abilities={character.abilities}
-                  onAdd={addAbility}
-                  onRemove={removeAbility}
-                />
-              ) : null}
-
-              {tab === 'inventory' ? (
-                <InventoryList items={character.inventory} onChange={setInventory} />
-              ) : null}
-
-              {tab === 'notes' ? (
-                <NotesPanel character={character} onChange={update} />
-              ) : null}
-
-              {tab === 'history' ? (
-                <RollHistory
-                  characterId={character.id}
-                  reloadToken={rollVersion}
-                  onCleared={() => setRollVersion((current) => current + 1)}
-                />
-              ) : null}
-            </div>
-          </div>
-
-        </div>
-      </div>
+      </section>
 
       {rolling ? (
         <RollDialog

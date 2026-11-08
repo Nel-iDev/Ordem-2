@@ -90,7 +90,11 @@ export interface OccupationDef {
   name: string
   summary: string
   ability: Ability
-  pvBonus: number
+}
+
+export interface ResourcePoints {
+  pv: number
+  pd: number
 }
 
 export interface InventoryItem {
@@ -122,6 +126,7 @@ export interface Character {
   attributes: Record<AttrKey, Die>
   skills: Record<SkillId, Die>
   aptitudes: Record<AptitudeId, Die>
+  resourcePoints: ResourcePoints
   pv: { current: number; max: number }
   pd: { current: number; max: number }
   impeto: { max: number; filled: number }

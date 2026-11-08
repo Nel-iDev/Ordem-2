@@ -1,4 +1,4 @@
-import { Minus, Plus } from 'lucide-react'
+import { Brain, Heart, Minus, Plus, Zap } from 'lucide-react'
 import type { Character } from '../../types'
 import { clamp } from '../../lib/utils'
 
@@ -13,28 +13,16 @@ function parseNumber(value: string, fallback: number): number {
 }
 
 export function Vitals({ character, onChange }: VitalsProps) {
-  const setPvMax = (max: number) => {
-    const safeMax = Math.max(1, max)
-    onChange({
-      pv: { max: safeMax, current: clamp(character.pv.current, 0, safeMax) },
-    })
-  }
-
-  const setPdMax = (max: number) => {
-    const safeMax = Math.max(1, max)
-    onChange({
-      pd: { max: safeMax, current: clamp(character.pd.current, 0, safeMax) },
-    })
-  }
-
   const pvPercent = character.pv.max > 0 ? (character.pv.current / character.pv.max) * 100 : 0
   const pdPercent = character.pd.max > 0 ? (character.pd.current / character.pd.max) * 100 : 0
 
   return (
     <div className="vitals">
-      <div className="vital">
-        <div className="vital-head">
-          <span>Pontos de Vida</span>
+      <article className="vital vital-pv">
+        <header className="vital-head">
+          <span className="vital-label">
+            <Heart size={14} aria-hidden="true" /> PV
+          </span>
           <span className="vital-value">
             <input
               type="number"
@@ -56,17 +44,9 @@ export function Vitals({ character, onChange }: VitalsProps) {
               }
             />
             <small>/</small>
-            <input
-              type="number"
-              min={1}
-              value={character.pv.max}
-              aria-label="PV máximo"
-              onChange={(event) =>
-                setPvMax(parseNumber(event.target.value, character.pv.max))
-              }
-            />
+            <strong>{character.pv.max}</strong>
           </span>
-        </div>
+        </header>
         <div className="bar bar-pv" role="presentation">
           <span style={{ width: `${clamp(pvPercent, 0, 100)}%` }} />
         </div>
@@ -76,7 +56,10 @@ export function Vitals({ character, onChange }: VitalsProps) {
             className="btn btn-sm"
             onClick={() =>
               onChange({
-                pv: { ...character.pv, current: clamp(character.pv.current - 1, 0, character.pv.max) },
+                pv: {
+                  ...character.pv,
+                  current: clamp(character.pv.current - 1, 0, character.pv.max),
+                },
               })
             }
           >
@@ -97,11 +80,13 @@ export function Vitals({ character, onChange }: VitalsProps) {
             <Plus size={13} aria-hidden="true" /> Cura
           </button>
         </div>
-      </div>
+      </article>
 
-      <div className="vital">
-        <div className="vital-head">
-          <span>Pontos de Determinação</span>
+      <article className="vital vital-pd">
+        <header className="vital-head">
+          <span className="vital-label">
+            <Brain size={14} aria-hidden="true" /> PD
+          </span>
           <span className="vital-value">
             <input
               type="number"
@@ -123,17 +108,9 @@ export function Vitals({ character, onChange }: VitalsProps) {
               }
             />
             <small>/</small>
-            <input
-              type="number"
-              min={1}
-              value={character.pd.max}
-              aria-label="PD máximo"
-              onChange={(event) =>
-                setPdMax(parseNumber(event.target.value, character.pd.max))
-              }
-            />
+            <strong>{character.pd.max}</strong>
           </span>
-        </div>
+        </header>
         <div className="bar bar-pd" role="presentation">
           <span style={{ width: `${clamp(pdPercent, 0, 100)}%` }} />
         </div>
@@ -143,7 +120,10 @@ export function Vitals({ character, onChange }: VitalsProps) {
             className="btn btn-sm"
             onClick={() =>
               onChange({
-                pd: { ...character.pd, current: clamp(character.pd.current - 1, 0, character.pd.max) },
+                pd: {
+                  ...character.pd,
+                  current: clamp(character.pd.current - 1, 0, character.pd.max),
+                },
               })
             }
           >
@@ -164,18 +144,20 @@ export function Vitals({ character, onChange }: VitalsProps) {
             <Plus size={13} aria-hidden="true" /> Recuperar
           </button>
         </div>
-      </div>
+      </article>
 
       {character.profile === 'executor' ? (
-        <div className="vital">
-          <div className="vital-head">
-            <span>Ímpeto</span>
-            <span className="vital-value">
-              {character.impeto.filled}
-              <small>/</small>
-              {character.impeto.max}
+        <article className="vital vital-impeto">
+          <header className="vital-head">
+            <span className="vital-label">
+              <Zap size={14} aria-hidden="true" /> Ímpeto
             </span>
-          </div>
+            <span className="vital-value">
+              <strong>{character.impeto.filled}</strong>
+              <small>/</small>
+              <strong>{character.impeto.max}</strong>
+            </span>
+          </header>
           <div className="impeto-spaces" role="group" aria-label="Espaços de Ímpeto">
             {Array.from({ length: character.impeto.max }, (_, index) => {
               const filled = index < character.impeto.filled
@@ -201,7 +183,7 @@ export function Vitals({ character, onChange }: VitalsProps) {
           <p className="small muted">
             Falhas preenchem 1 espaço. Gaste 1 para +d4 ou 3 para +1 passo de atributo na cena.
           </p>
-        </div>
+        </article>
       ) : null}
     </div>
   )

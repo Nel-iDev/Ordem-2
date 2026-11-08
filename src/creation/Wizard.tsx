@@ -3,7 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Save } from 'lucide-react'
 import type { AptitudeId, AttrKey, Character, Die, ProfileId, SkillId } from '../types'
 import { OCCUPATION_BY_ID } from '../data/occupations'
-import { createEmptyCharacter, syncAbilities, validateCharacter } from '../lib/character'
+import {
+  createEmptyCharacter,
+  syncAbilities,
+  syncResourceTotals,
+  validateCharacter,
+} from '../lib/character'
 import { useCharacters } from '../context/characters'
 import { useToast } from '../context/toast'
 import { IdentityStep } from './steps/IdentityStep'
@@ -30,13 +35,14 @@ const STEPS = [
     id: 'occupation',
     label: 'Ocupação',
     title: 'O que ele fazia antes?',
-    subtitle: 'A ocupação concede uma habilidade e pode aumentar os PV.',
+    subtitle: 'A ocupação concede uma habilidade de assinatura ao agente.',
   },
   {
     id: 'attributes',
     label: 'Atributos',
     title: 'Corpo, mente e emoção',
-    subtitle: 'Distribua 8 passos entre os três atributos.',
+    subtitle:
+      'Distribua 8 passos. O dado de Físico define a base de PV; o de Emoção define a base de PD.',
   },
   {
     id: 'skills',
@@ -48,7 +54,7 @@ const STEPS = [
     id: 'review',
     label: 'Revisão',
     title: 'Última checagem',
-    subtitle: 'Ajuste recursos, nível e valide a ficha antes de salvar.',
+    subtitle: 'Distribua os pontos de PV/PD e valide a ficha antes de salvar.',
   },
 ] as const
 
@@ -85,10 +91,12 @@ export function Wizard() {
   }
 
   const changeAttr = (attr: AttrKey, die: Die) => {
-    setDraft((current) => ({
-      ...current,
-      attributes: { ...current.attributes, [attr]: die },
-    }))
+    setDraft((current) =>
+      syncResourceTotals({
+        ...current,
+        attributes: { ...current.attributes, [attr]: die },
+      }),
+    )
   }
 
   const changeSkill = (id: SkillId, die: Die) => {
@@ -120,15 +128,16 @@ export function Wizard() {
   const goBack = () => setStep((current) => Math.max(0, current - 1))
 
   const finish = () => {
-    const problems = validateCharacter(draft, freeMode)
+    const prepared = syncResourceTotals(draft)
+    const problems = validateCharacter(prepared, freeMode)
     if (problems.length) {
       notify(problems[0], 'danger')
       return
     }
     try {
-      save({ ...draft, updatedAt: Date.now() })
+      save({ ...prepared, updatedAt: Date.now() })
       notify('Ficha salva com sucesso.', 'success')
-      navigate(`/ficha/${draft.id}`)
+      navigate(`/ficha/${prepared.id}`)
     } catch {
       notify('Não foi possível salvar a ficha neste navegador.', 'danger')
     }

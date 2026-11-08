@@ -5,7 +5,6 @@ export const OCCUPATIONS: OccupationDef[] = [
     id: 'cientista',
     name: 'Cientista',
     summary: 'Pesquisador, médico, engenheiro ou acadêmico. A mente é a ferramenta de trabalho.',
-    pvBonus: 0,
     ability: {
       id: 'ocupacao-cientista',
       name: 'Foco Mental',
@@ -20,7 +19,6 @@ export const OCCUPATIONS: OccupationDef[] = [
     id: 'artista',
     name: 'Artista',
     summary: 'Músico, ator, escritor ou performer. Sabe ler a emoção das pessoas e do ambiente.',
-    pvBonus: 0,
     ability: {
       id: 'ocupacao-artista',
       name: 'Foco Emocional',
@@ -35,7 +33,6 @@ export const OCCUPATIONS: OccupationDef[] = [
     id: 'professor',
     name: 'Professor',
     summary: 'Ensinar é fazer o outro enxergar o que já estava na frente dele.',
-    pvBonus: 2,
     ability: {
       id: 'ocupacao-professor',
       name: 'Mentoria',
@@ -50,7 +47,6 @@ export const OCCUPATIONS: OccupationDef[] = [
     id: 'profissional-de-escritorio',
     name: 'Profissional de escritório',
     summary: 'Rotina, burocracia e tecnologia. Sabe navegar sistemas e encontrar a informação certa.',
-    pvBonus: 2,
     ability: {
       id: 'ocupacao-profissional',
       name: 'Conhecimento Técnico',
@@ -64,7 +60,6 @@ export const OCCUPATIONS: OccupationDef[] = [
     id: 'operario',
     name: 'Operário',
     summary: 'Trabalho pesado, resistência e mãos calejadas. Sabe aguentar o que a maioria não aguenta.',
-    pvBonus: 4,
     ability: {
       id: 'ocupacao-operario',
       name: 'Esforço e Suor',

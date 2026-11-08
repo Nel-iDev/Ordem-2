@@ -57,7 +57,7 @@ export function CharactersProvider({ children }: { children: ReactNode }) {
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = 'arquivo2-fichas.json'
+    anchor.download = 'ordem2-fichas.json'
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()

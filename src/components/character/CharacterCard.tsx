@@ -20,7 +20,9 @@ export function CharacterCard({
   onDelete,
 }: CharacterCardProps) {
   const profile = PROFILE_BY_ID[character.profile]
-  const style = { '--card-accent': profile?.accent ?? '#ff4d4d' } as CSSProperties
+  const style = { '--card-accent': profile?.accent ?? '#a347ff' } as CSSProperties
+  const pvPercent = character.pv.max > 0 ? (character.pv.current / character.pv.max) * 100 : 0
+  const pdPercent = character.pd.max > 0 ? (character.pd.current / character.pd.max) * 100 : 0
 
   return (
     <article className="character-card" style={style}>
@@ -46,12 +48,18 @@ export function CharacterCard({
           <strong>
             {character.pv.current}/{character.pv.max}
           </strong>
+          <div className="mini-bar mini-bar-pv">
+            <span style={{ width: `${pvPercent}%` }} />
+          </div>
         </div>
         <div className="stat-mini">
           <span>PD</span>
           <strong>
             {character.pd.current}/{character.pd.max}
           </strong>
+          <div className="mini-bar mini-bar-pd">
+            <span style={{ width: `${pdPercent}%` }} />
+          </div>
         </div>
       </div>
 

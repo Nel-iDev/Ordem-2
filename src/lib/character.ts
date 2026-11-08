@@ -7,6 +7,7 @@ import type {
   AttrKey,
   Character,
   Die,
+  ResourcePoints,
   RollableSkill,
   SkillId,
 } from '../types'
@@ -14,6 +15,7 @@ import { dieCost, dieMax } from './dice'
 
 export const ATTR_BUDGET = 8
 export const SKILL_BUDGET = 8
+export const LEVEL_RESOURCE_POINTS = 6
 
 export function createId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -60,6 +62,45 @@ export function syncAbilities(
   ]
 }
 
+export function levelResourcePoints(level: number): number {
+  return LEVEL_RESOURCE_POINTS * Math.max(0, Math.floor(level) - 1)
+}
+
+export function defaultResourcePoints(level: number): ResourcePoints {
+  const total = levelResourcePoints(level)
+  const pv = Math.floor(total / 2)
+  return { pv, pd: total - pv }
+}
+
+export function clampResourcePoints(points: ResourcePoints, level: number): ResourcePoints {
+  const budget = levelResourcePoints(level)
+  let pv = Math.max(0, Math.floor(points.pv))
+  let pd = Math.max(0, Math.floor(points.pd))
+  let excess = pv + pd - budget
+  if (excess > 0) {
+    const fromPd = Math.min(pd, excess)
+    pd -= fromPd
+    excess -= fromPd
+    pv = Math.max(0, pv - excess)
+  }
+  return { pv, pd }
+}
+
+export function resourceBase(character: Pick<Character, 'attributes'>) {
+  return {
+    pv: dieMax(character.attributes.fisico),
+    pd: dieMax(character.attributes.emocao),
+  }
+}
+
+export function resourcePointsSpent(character: Character): number {
+  return character.resourcePoints.pv + character.resourcePoints.pd
+}
+
+export function resourcePointsRemaining(character: Character): number {
+  return Math.max(0, levelResourcePoints(character.level) - resourcePointsSpent(character))
+}
+
 export function createEmptyCharacter(overrides: Partial<Character> = {}): Character {
   const base: Character = {
     id: createId(),
@@ -74,8 +115,9 @@ export function createEmptyCharacter(overrides: Partial<Character> = {}): Charac
     attributes: { fisico: 'd8', mente: 'd8', emocao: 'd6' },
     skills: allSkillsAt('d4'),
     aptitudes: allAptitudesAt('d4'),
-    pv: { current: 12, max: 12 },
-    pd: { current: 14, max: 14 },
+    resourcePoints: defaultResourcePoints(2),
+    pv: { current: 8, max: 8 },
+    pd: { current: 6, max: 6 },
     impeto: { max: 3, filled: 0 },
     abilities: [],
     inventory: [],
@@ -87,7 +129,20 @@ export function createEmptyCharacter(overrides: Partial<Character> = {}): Charac
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
-  const merged = { ...base, ...overrides }
+  const merged: Character = {
+    ...base,
+    ...overrides,
+    attributes: { ...base.attributes, ...(overrides.attributes ?? {}) },
+    resourcePoints:
+      overrides.resourcePoints ?? defaultResourcePoints(overrides.level ?? base.level),
+  }
+  const suggested = suggestResources(merged)
+  merged.pv = overrides.pv
+    ? { ...merged.pv, ...overrides.pv }
+    : { current: suggested.pvMax, max: suggested.pvMax }
+  merged.pd = overrides.pd
+    ? { ...merged.pd, ...overrides.pd }
+    : { current: suggested.pdMax, max: suggested.pdMax }
   merged.abilities = overrides.abilities ?? syncAbilities(merged)
   return merged
 }
@@ -97,11 +152,33 @@ export function getOccupation(character: Character) {
 }
 
 export function suggestResources(character: Character) {
-  const occupation = getOccupation(character)
-  const pvMax =
-    dieMax(character.attributes.fisico) + 2 * character.level + (occupation?.pvBonus ?? 0)
-  const pdMax = dieMax(character.attributes.mente) + dieMax(character.attributes.emocao)
-  return { pvMax, pdMax }
+  const base = resourceBase(character)
+  return {
+    pvMax: base.pv + character.resourcePoints.pv,
+    pdMax: base.pd + character.resourcePoints.pd,
+  }
+}
+
+/**
+ * Recalcula os máximos de PV/PD a partir dos atributos e dos pontos de nível.
+ * Quando o máximo aumenta, o valor atual sobe junto (progressão); quando diminui,
+ * o atual é apenas limitado ao novo máximo.
+ */
+export function syncResourceTotals(character: Character): Character {
+  const { pvMax, pdMax } = suggestResources(character)
+  const pvGain = Math.max(0, pvMax - character.pv.max)
+  const pdGain = Math.max(0, pdMax - character.pd.max)
+  return {
+    ...character,
+    pv: {
+      max: pvMax,
+      current: Math.min(pvMax, Math.max(0, character.pv.current + pvGain)),
+    },
+    pd: {
+      max: pdMax,
+      current: Math.min(pdMax, Math.max(0, character.pd.current + pdGain)),
+    },
+  }
 }
 
 export function withSuggestedResources(character: Character): Character {

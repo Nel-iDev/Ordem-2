@@ -34,7 +34,7 @@ const FIELDS: Array<{
 
 export function NotesPanel({ character, onChange }: NotesPanelProps) {
   return (
-    <div className="notes-grid">
+    <div className="description-grid">
       {FIELDS.map((field) => (
         <label className="field" key={field.key}>
           <span>{field.label}</span>

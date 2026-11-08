@@ -4,13 +4,17 @@ import {
   ATTR_BUDGET,
   SKILL_BUDGET,
   attributeSpent,
+  clampResourcePoints,
   conditionStep,
   createEmptyCharacter,
+  defaultResourcePoints,
   getRollableSkills,
   getSkillDie,
+  levelResourcePoints,
   skillSpent,
   suggestResources,
   syncAbilities,
+  syncResourceTotals,
   validateCharacter,
 } from './character'
 
@@ -21,8 +25,9 @@ describe('personagem', () => {
     expect(character.attributes).toEqual({ fisico: 'd8', mente: 'd8', emocao: 'd6' })
     expect(attributeSpent(character)).toBe(ATTR_BUDGET)
     expect(skillSpent(character)).toBe(0)
-    expect(character.pv).toEqual({ current: 12, max: 12 })
-    expect(character.pd.current).toBe(14)
+    expect(character.resourcePoints).toEqual({ pv: 3, pd: 3 })
+    expect(character.pv).toEqual({ current: 11, max: 11 })
+    expect(character.pd.current).toBe(9)
     expect(character.abilities.length).toBe(2)
   })
 
@@ -56,15 +61,45 @@ describe('personagem', () => {
     expect(abilities.some((ability) => ability.id === 'custom-1')).toBe(true)
   })
 
-  it('calcula PV e PD sugeridos com ocupação e nível', () => {
+  it('calcula a base de PV/PD pelos atributos e soma os pontos de nível', () => {
     const character = createEmptyCharacter({
       level: 3,
       occupationId: 'operario',
       occupation: 'Operário',
       attributes: { fisico: 'd10', mente: 'd8', emocao: 'd12' },
+      resourcePoints: { pv: 4, pd: 2 },
     })
 
-    expect(suggestResources(character)).toEqual({ pvMax: 20, pdMax: 20 })
+    expect(suggestResources(character)).toEqual({ pvMax: 14, pdMax: 14 })
+    expect(levelResourcePoints(1)).toBe(0)
+    expect(levelResourcePoints(2)).toBe(6)
+    expect(levelResourcePoints(3)).toBe(12)
+  })
+
+  it('distribui os pontos de nível e limita alocações acima do orçamento', () => {
+    expect(defaultResourcePoints(1)).toEqual({ pv: 0, pd: 0 })
+    expect(defaultResourcePoints(2)).toEqual({ pv: 3, pd: 3 })
+    expect(defaultResourcePoints(3)).toEqual({ pv: 6, pd: 6 })
+    expect(clampResourcePoints({ pv: 5, pd: 5 }, 2)).toEqual({ pv: 5, pd: 1 })
+    expect(clampResourcePoints({ pv: 8, pd: 1 }, 2)).toEqual({ pv: 6, pd: 0 })
+    expect(clampResourcePoints({ pv: 2, pd: 4 }, 3)).toEqual({ pv: 2, pd: 4 })
+  })
+
+  it('sincroniza os máximos quando o atributo ou o nível sobe', () => {
+    const character = createEmptyCharacter({
+      level: 2,
+      attributes: { fisico: 'd8', mente: 'd8', emocao: 'd6' },
+      resourcePoints: { pv: 3, pd: 3 },
+    })
+
+    const upgraded = syncResourceTotals({
+      ...character,
+      attributes: { ...character.attributes, fisico: 'd10' },
+    })
+
+    expect(upgraded.pv.max).toBe(13)
+    expect(upgraded.pv.current).toBe(13)
+    expect(upgraded.pd.max).toBe(9)
   })
 
   it('acumula passos de condição por atributo', () => {

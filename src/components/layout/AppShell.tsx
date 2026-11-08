@@ -6,12 +6,12 @@ export function AppShell() {
     <div className="app-shell">
       <header className="app-header">
         <div className="container app-header-inner">
-          <NavLink to="/" className="brand" aria-label="Arquivo 2 — início">
+          <NavLink to="/" className="brand" aria-label="Ordem 2 — início">
             <span className="brand-mark">
               <Skull size={18} aria-hidden="true" />
             </span>
             <span className="brand-text">
-              <span className="brand-title">Arquivo 2</span>
+              <span className="brand-title">Ordem 2</span>
               <span className="brand-sub">Fichas de campo</span>
             </span>
           </NavLink>
@@ -40,7 +40,7 @@ export function AppShell() {
 
       <footer className="app-footer">
         <div className="container">
-          <span>Arquivo 2 · fichas salvas localmente no seu navegador</span>
+          <span>Ordem 2 · fichas salvas localmente no seu navegador</span>
           <span className="mono">d4 · d6 · d8 · d10 · d12</span>
         </div>
       </footer>

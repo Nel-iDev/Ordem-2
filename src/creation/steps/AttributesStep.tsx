@@ -1,6 +1,6 @@
 import type { AttrKey, Character, Die } from '../../types'
 import { ATTRIBUTES, ATTR_LABEL } from '../../data/skills'
-import { ATTR_BUDGET, attributeSpent } from '../../lib/character'
+import { ATTR_BUDGET, attributeSpent, resourceBase } from '../../lib/character'
 import { DieStep } from '../../components/ui/DieStep'
 
 interface AttributesStepProps {
@@ -12,6 +12,7 @@ export function AttributesStep({ character, onChangeAttr }: AttributesStepProps)
   const spent = attributeSpent(character)
   const over = spent > ATTR_BUDGET
   const percent = Math.min(100, (spent / ATTR_BUDGET) * 100)
+  const base = resourceBase(character)
 
   return (
     <div>
@@ -49,6 +50,8 @@ export function AttributesStep({ character, onChangeAttr }: AttributesStepProps)
 
       <p className="small muted" style={{ marginTop: 14 }}>
         Cada passo custa 1 ponto: d4 = 1, d6 = 2, d8 = 3, d10 = 4, d12 = 5. O mínimo é d4.
+        Físico {character.attributes.fisico} dá base de {base.pv} PV; Emoção{' '}
+        {character.attributes.emocao} dá base de {base.pd} PD.
       </p>
     </div>
   )

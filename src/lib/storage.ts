@@ -1,5 +1,11 @@
 import type { Character, RollRecord } from '../types'
-import { createEmptyCharacter, createId, syncAbilities } from './character'
+import {
+  createEmptyCharacter,
+  createId,
+  defaultResourcePoints,
+  syncAbilities,
+} from './character'
+import { dieMax } from './dice'
 
 const CHARACTER_KEY = 'arquivo2.characters.v1'
 const ROLL_KEY = 'arquivo2.rolls.v1'
@@ -21,8 +27,44 @@ function readStorage(key: string): string | null {
   }
 }
 
+function clampCurrent(value: unknown, max: number): number {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return max
+  return Math.min(max, Math.max(0, Math.floor(parsed)))
+}
+
 export function normalizeCharacter(input: Partial<Character>): Character {
   const base = createEmptyCharacter()
+  const rawLevel = Number(input.level ?? base.level)
+  const level = Number.isFinite(rawLevel) ? Math.max(1, Math.floor(rawLevel)) : base.level
+  const attributes = { ...base.attributes, ...(input.attributes ?? {}) }
+  const fallbackPoints = defaultResourcePoints(level)
+  const legacyPvMax = Number(input.pv?.max)
+  const legacyPdMax = Number(input.pd?.max)
+
+  // Fichas antigas não têm `resourcePoints`. Recupera a distribuição a partir
+  // do máximo salvo, descontando a base atual do atributo correspondente.
+  const hasResourcePoints =
+    input.resourcePoints &&
+    Number.isFinite(input.resourcePoints.pv) &&
+    Number.isFinite(input.resourcePoints.pd)
+  const resourcePoints = hasResourcePoints
+    ? {
+        pv: Math.max(0, Math.floor(input.resourcePoints!.pv)),
+        pd: Math.max(0, Math.floor(input.resourcePoints!.pd)),
+      }
+    : {
+        pv: Number.isFinite(legacyPvMax)
+          ? Math.max(0, Math.floor(legacyPvMax - dieMax(attributes.fisico)))
+          : fallbackPoints.pv,
+        pd: Number.isFinite(legacyPdMax)
+          ? Math.max(0, Math.floor(legacyPdMax - dieMax(attributes.emocao)))
+          : fallbackPoints.pd,
+      }
+
+  const pvMax = dieMax(attributes.fisico) + resourcePoints.pv
+  const pdMax = dieMax(attributes.emocao) + resourcePoints.pd
+
   const merged: Character = {
     ...base,
     ...input,
@@ -33,13 +75,20 @@ export function normalizeCharacter(input: Partial<Character>): Character {
     profile: input.profile ?? base.profile,
     occupationId: input.occupationId ?? base.occupationId,
     occupation: input.occupation ?? base.occupation,
-    level: Number(input.level ?? base.level),
+    level,
     nex: Number(input.nex ?? base.nex),
-    attributes: { ...base.attributes, ...(input.attributes ?? {}) },
+    attributes,
     skills: { ...base.skills, ...(input.skills ?? {}) },
     aptitudes: { ...base.aptitudes, ...(input.aptitudes ?? {}) },
-    pv: { ...base.pv, ...(input.pv ?? {}) },
-    pd: { ...base.pd, ...(input.pd ?? {}) },
+    resourcePoints,
+    pv: {
+      current: clampCurrent(input.pv?.current, pvMax),
+      max: pvMax,
+    },
+    pd: {
+      current: clampCurrent(input.pd?.current, pdMax),
+      max: pdMax,
+    },
     impeto: { ...base.impeto, ...(input.impeto ?? {}) },
     inventory: Array.isArray(input.inventory) ? input.inventory : [],
     conditions: Array.isArray(input.conditions) ? input.conditions : [],

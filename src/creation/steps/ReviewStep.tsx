@@ -2,8 +2,8 @@ import type { Character } from '../../types'
 import { APTITUDES, ATTRIBUTES, ATTR_LABEL, SKILLS } from '../../data/skills'
 import { OCCUPATION_BY_ID } from '../../data/occupations'
 import { PROFILES, PROFILE_BY_ID } from '../../data/profiles'
-import { suggestResources } from '../../lib/character'
 import { DieIcon } from '../../components/DieIcon'
+import { ResourcePlanner } from '../../components/character/ResourcePlanner'
 
 interface ReviewStepProps {
   character: Character
@@ -22,18 +22,10 @@ export function ReviewStep({
 }: ReviewStepProps) {
   const profile = PROFILE_BY_ID[character.profile] ?? PROFILES[0]
   const occupation = OCCUPATION_BY_ID[character.occupationId]
-  const suggested = suggestResources(character)
   const trained = SKILLS.filter((skill) => character.skills[skill.id] !== 'd4')
   const trainedAptitudes = APTITUDES.filter(
     (aptitude) => character.aptitudes[aptitude.id] !== 'd4',
   )
-
-  const applySuggestion = () => {
-    onChange({
-      pv: { current: suggested.pvMax, max: suggested.pvMax },
-      pd: { current: suggested.pdMax, max: suggested.pdMax },
-    })
-  }
 
   return (
     <div className="stack">
@@ -122,48 +114,8 @@ export function ReviewStep({
 
       <div className="review-block">
         <h3>Recursos & nível</h3>
-        <div
-          className="input-row"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}
-        >
-          <label className="field">
-            <span>PV máximo</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              value={character.pv.max}
-              onChange={(event) => {
-                const max = Math.max(1, Number(event.target.value) || 1)
-                onChange({ pv: { current: Math.min(character.pv.current, max), max } })
-              }}
-            />
-          </label>
-          <label className="field">
-            <span>PD máximo</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              value={character.pd.max}
-              onChange={(event) => {
-                const max = Math.max(1, Number(event.target.value) || 1)
-                onChange({ pd: { current: Math.min(character.pd.current, max), max } })
-              }}
-            />
-          </label>
-          <label className="field">
-            <span>Nível</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              value={character.level}
-              onChange={(event) =>
-                onChange({ level: Math.max(1, Number(event.target.value) || 1) })
-              }
-            />
-          </label>
+        <ResourcePlanner character={character} onChange={onChange} />
+        <div className="review-nex">
           <label className="field">
             <span>NEX</span>
             <input
@@ -174,14 +126,6 @@ export function ReviewStep({
               onChange={(event) => onChange({ nex: Math.max(0, Number(event.target.value) || 0) })}
             />
           </label>
-        </div>
-        <div className="row-between" style={{ marginTop: 12, flexWrap: 'wrap' }}>
-          <span className="small muted">
-            Sugestão: {suggested.pvMax} PV e {suggested.pdMax} PD.
-          </span>
-          <button type="button" className="btn btn-sm" onClick={applySuggestion}>
-            Recalcular sugestão
-          </button>
         </div>
       </div>
 

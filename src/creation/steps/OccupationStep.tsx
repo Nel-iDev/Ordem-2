@@ -16,9 +16,7 @@ export function OccupationStep({ selected, onSelect }: OccupationStepProps) {
           onClick={() => onSelect(occupation.id)}
           aria-pressed={selected === occupation.id}
         >
-          <span className="option-tag">
-            Ocupação · +{occupation.pvBonus} PV
-          </span>
+          <span className="option-tag">Ocupação</span>
           <h3>{occupation.name}</h3>
           <p>{occupation.summary}</p>
           <div

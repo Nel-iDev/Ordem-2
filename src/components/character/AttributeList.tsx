@@ -12,29 +12,33 @@ interface AttributeListProps {
 
 export function AttributeList({ character, penalties, onChange }: AttributeListProps) {
   return (
-    <div className="attr-list">
+    <div className="attr-cards">
       {ATTRIBUTES.map((attribute) => {
         const die = character.attributes[attribute.key]
         const penalty = penalties[attribute.key] ?? 0
         const effective = stepDie(die, -penalty)
         return (
-          <div className="attr-item" key={attribute.key} title={attribute.description}>
-            <DieIcon die={effective} attr={attribute.key} size={30} />
-            <div className="attr-item-info">
-              <strong>{ATTR_LABEL[attribute.key]}</strong>
-              <small>
-                {penalty > 0
-                  ? `${effective} efetivo · base ${die} (${penalty} passo${penalty > 1 ? 's' : ''} de penalidade)`
-                  : attribute.description}
-              </small>
+          <article
+            className={`attr-card attr-card-${attribute.key}`}
+            key={attribute.key}
+            title={attribute.description}
+          >
+            <span className="attr-card-label">{ATTR_LABEL[attribute.key]}</span>
+            <div className="attr-card-die">
+              <DieIcon die={effective} attr={attribute.key} size={34} />
+              <strong>{effective}</strong>
             </div>
-            {penalty > 0 ? <span className="attr-penalty">−{penalty}</span> : null}
+            <span className={`attr-card-base${penalty > 0 ? ' penalized' : ''}`}>
+              {penalty > 0
+                ? `base ${die} · −${penalty} passo${penalty > 1 ? 's' : ''}`
+                : `base ${die}`}
+            </span>
             <DieStep
               die={die}
               label={attribute.name}
               onChange={(next) => onChange(attribute.key, next)}
             />
-          </div>
+          </article>
         )
       })}
     </div>
