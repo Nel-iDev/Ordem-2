@@ -1,4 +1,4 @@
-import type { Character, MentoriaHelp, RollRecord } from '../types'
+import type { Character, CombatEncounter, MentoriaHelp, RollRecord } from '../types'
 import { normalizeAbilityState } from './abilities'
 import {
   createEmptyCharacter,
@@ -6,11 +6,13 @@ import {
   defaultResourcePoints,
   syncAbilities,
 } from './character'
+import { normalizeEncounter } from './combat'
 import { dieMax } from './dice'
 
 const CHARACTER_KEY = 'arquivo2.characters.v1'
 const ROLL_KEY = 'arquivo2.rolls.v1'
 const MENTORIA_KEY = 'arquivo2.mentoria.v1'
+const COMBAT_KEY = 'arquivo2.combats.v1'
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback
@@ -214,6 +216,40 @@ export function addRoll(roll: RollRecord) {
 export function clearRolls(characterId: string) {
   const rolls = loadRolls().filter((roll) => roll.characterId !== characterId)
   localStorage.setItem(ROLL_KEY, JSON.stringify(rolls))
+}
+
+export function loadEncounters(): CombatEncounter[] {
+  const raw = safeParse<unknown>(readStorage(COMBAT_KEY), [])
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter(
+      (entry): entry is Partial<CombatEncounter> =>
+        Boolean(entry) && typeof entry === 'object',
+    )
+    .map((entry) => normalizeEncounter(entry))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 50)
+}
+
+export function saveEncounters(encounters: CombatEncounter[]) {
+  localStorage.setItem(COMBAT_KEY, JSON.stringify(encounters))
+}
+
+export function getEncounter(id: string): CombatEncounter | undefined {
+  return loadEncounters().find((encounter) => encounter.id === id)
+}
+
+export function upsertEncounter(encounter: CombatEncounter) {
+  const encounters = loadEncounters()
+  const index = encounters.findIndex((entry) => entry.id === encounter.id)
+  const next = { ...encounter, updatedAt: Date.now() }
+  if (index >= 0) encounters[index] = next
+  else encounters.unshift(next)
+  saveEncounters(encounters)
+}
+
+export function deleteEncounter(id: string) {
+  saveEncounters(loadEncounters().filter((encounter) => encounter.id !== id))
 }
 
 export function parseImportedCharacters(text: string): Character[] {

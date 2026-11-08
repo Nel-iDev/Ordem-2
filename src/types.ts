@@ -215,3 +215,45 @@ export interface RollableSkill {
   die: Die
   kind: 'skill' | 'aptitude'
 }
+
+/**
+ * Participante de uma cena de combate. Personagens são vinculados à ficha e
+ * usam PV/PD ao vivo; NPCs guardam os próprios recursos.
+ */
+interface CombatantBase {
+  id: string
+  /** Nome de exibição. Em personagens vinculados, o nome atual da ficha tem prioridade. */
+  name: string
+  initiative: number
+  defeated: boolean
+}
+
+export interface CharacterCombatant extends CombatantBase {
+  kind: 'character'
+  characterId: string
+}
+
+export interface NpcCombatant extends CombatantBase {
+  kind: 'npc'
+  pv: { current: number; max: number }
+  pd: { current: number; max: number }
+}
+
+export type Combatant = CharacterCombatant | NpcCombatant
+
+export type CombatPhase = 'prontidao' | 'normal'
+
+export interface CombatEncounter {
+  id: string
+  name: string
+  round: number
+  phase: CombatPhase
+  /** Participante do turno atual. */
+  currentId: string | null
+  /** Participantes que ganharam a rodada extra de Prontidão no início da cena. */
+  prontidaoIds: string[]
+  active: boolean
+  combatants: Combatant[]
+  createdAt: number
+  updatedAt: number
+}

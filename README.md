@@ -19,6 +19,8 @@ Fichas de personagem, perícias e rolagens para um RPG de investigação paranor
 - **Habilidades automatizadas** — custos em PD, cargas, escolhas de perícia, bônus de
   atributo e ajudas de Mentoria são aplicados pelo motor de regras, com status de
   "Ativa", "Disponível" ou "Requisito pendente" em cada habilidade.
+- **Mesa de combate** — cenas com ordem de iniciativa, rodada extra de Prontidão, turno
+  atual, PV/PD de agentes e NPCs, condições e marcação de participantes fora de combate.
 
 ## Regras de PV e PD (playtest)
 
@@ -42,7 +44,7 @@ perícias: os efeitos são derivados na hora da rolagem e registrados no estado
 | **Foco Mental / Foco Emocional** | Opção de +d4 no diálogo de rolagem do atributo correspondente, cobrando 2 PD. |
 | **Avaliação** | Botão para observar um alvo (2 PD), gerando 2 cargas de d4. A rolagem oferece +2d4 em um teste ou +d4 em dois testes, sem passar de 2 cargas. |
 | **Ímpeto** | Falhas preenchem 1 espaço; 1 espaço compra +d4 na rolagem; 3 espaços compram +1 passo de atributo até o fim da cena. |
-| **Prontidão** | Botão para gastar 3 PD e marcar a habilidade como usada no conflito, com reinício manual. |
+| **Prontidão** | Botão para gastar 3 PD antes do combate; na mesa, o agente recebe uma rodada extra antes de todos. O uso é limpo ao encerrar a cena. |
 | **Mentoria** | Modo "Ajudar aliado" no diálogo, com teste contra DT 7. Se passar, gera uma ajuda que outro personagem pode usar para substituir o menor dado contado pela sua rolagem alta. |
 | **Conhecimento Técnico** | Seleção de uma perícia mental; a perícia passa a usar d6 (ou mantém o dado maior) nas rolagens. |
 | **Esforço e Suor** | Seleção de uma perícia física; a perícia passa a usar d6 (ou mantém o dado maior) nas rolagens. |
@@ -56,9 +58,9 @@ perícias: os efeitos são derivados na hora da rolagem e registrados no estado
   relaciona a ele.
 - **Avaliação — acúmulo.** A habilidade diz que não acumula mais de dois dados. Reobservar
   substitui o alvo e repõe as cargas em 2; não somamos cargas antigas.
-- **Prontidão — rodada extra.** O aplicativo não possui iniciativa/combate nesta etapa,
-  então o botão apenas cobra os 3 PD e marca o uso. A rodada adicional é resolvida na mesa
-  e o botão "Novo conflito" libera a habilidade novamente.
+- **Prontidão — rodada extra.** A mesa executa a rodada adicional antes da rodada 1 e não
+  repete a prioridade nas rodadas seguintes. O uso continua disponível na ficha para
+  conflitos resolvidos fora da mesa; "Novo conflito" libera a habilidade manualmente.
 - **Mentoria — ajudas simultâneas.** A regra não define se vários ajudantes podem
   substituir dados no mesmo teste. A implementação permite **uma ajuda por rolagem**; o
   jogador escolhe qual ajuda usar. As ajudas ficam em `localStorage` e são consumidas ao
@@ -68,6 +70,26 @@ perícias: os efeitos são derivados na hora da rolagem e registrados no estado
   possível acumular dois bônus de atributo ao mesmo tempo.
 - **Conhecimento Técnico / Esforço e Suor.** "Aumentada para d6" foi tratado como "pelo
   menos d6": quem já tem d8 ou mais mantém o dado maior.
+
+## Mesa de combate
+
+A mesa fica em `/combate` e guarda cada cena separadamente. O motor de regras está em
+`src/lib/combat.ts` e a persistência em `arquivo2.combats.v1`.
+
+- **Participantes** — agentes do arquivo são vinculados à ficha e usam PV, PD e condições ao
+  vivo; NPCs guardam PV/PD próprios. Uma ficha removida do arquivo permanece na cena apenas
+  como registro, até ser retirada.
+- **Iniciativa** — o valor é digitado pela mesa, do maior para o menor. O material atual não
+  define uma rolagem de iniciativa, então o aplicativo não inventa uma fórmula.
+- **Prontidão** — agentes com a habilidade ativa entram numa rodada extra antes da rodada 1.
+  A prioridade vale apenas nessa rodada; depois todos seguem a iniciativa normal.
+- **Turnos** — "Próximo turno" avança para o próximo participante vivo, pula os marcados como
+  fora de combate e incrementa a rodada ao fechar a lista.
+- **Encerramento** — encerrar a cena limpa Prontidão e o bônus de atributo do Ímpeto dos
+  agentes participantes. PV, PD, condições e espaços de Ímpeto permanecem nas fichas.
+- **Dúvidas de regra.** Não há economia de ações: ativar Prontidão na mesa só é oferecido
+  antes do início e cobra os 3 PD. A ordem de iniciativa, os valores de PV/PD de NPCs e a
+  decisão de quando um participante está fora de combate ficam a cargo da mesa.
 
 ## Requisitos
 
@@ -94,8 +116,8 @@ src/
   creation/     # wizard de criação e suas etapas
   data/         # perfis, ocupações, perícias e regras
   hooks/        # useDebouncedSave
-  lib/          # motor de regras (dice, character, storage) + testes
-  pages/        # Arquivo, criação, ficha e 404
+  lib/          # motor de regras (dice, character, abilities, combat, storage) + testes
+  pages/        # Arquivo, criação, ficha, combate e 404
   types.ts      # tipos do domínio
 ```
 
@@ -113,14 +135,14 @@ e o `BrowserRouter` recebe `basename` a partir de `import.meta.env.BASE_URL`. Pa
 domínio próprio ou na raiz, rode o build com `VITE_BASE="/"`.
 
 O workflow copia `dist/index.html` para `dist/404.html`, o que permite abrir ou recarregar
-rotas como `/ficha/:id` diretamente no Pages.
+rotas como `/ficha/:id` e `/combate` diretamente no Pages.
 
 ## Armazenamento local
 
 As fichas ficam em `localStorage` sob a chave `arquivo2.characters.v1`, as rolagens em
-`arquivo2.rolls.v1` e as ajudas pendentes de Mentoria em `arquivo2.mentoria.v1`. As duas
-primeiras chaves foram mantidas para preservar fichas criadas antes da renomeação para
-**Ordem 2**. Limpar os dados do site no navegador apaga tudo — use **Exportar tudo** no
+`arquivo2.rolls.v1`, as ajudas pendentes de Mentoria em `arquivo2.mentoria.v1` e as cenas de
+combate em `arquivo2.combats.v1`. As duas primeiras chaves foram mantidas para preservar
+fichas criadas antes da renomeação para **Ordem 2**. Limpar os dados do site no navegador apaga tudo — use **Exportar tudo** no
 arquivo para manter um backup em JSON. A importação aceita uma ficha ou uma lista e gera novos
 IDs para registros que colidam com fichas já existentes.
 

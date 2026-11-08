@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RollRecord } from '../types'
 import { createEmptyCharacter } from './character'
+import { addCombatant, createEncounter, createNpcCombatant } from './combat'
 import {
   addMentoriaHelp,
   addRoll,
@@ -8,15 +9,20 @@ import {
   clearRolls,
   consumeMentoriaHelp,
   deleteCharacter,
+  deleteEncounter,
   duplicateCharacter,
   getCharacter,
+  getEncounter,
   loadCharacters,
+  loadEncounters,
   loadMentoriaHelps,
   loadRolls,
   normalizeCharacter,
   parseImportedCharacters,
   saveCharacters,
+  saveEncounters,
   upsertCharacter,
+  upsertEncounter,
 } from './storage'
 
 class MemoryStorage {
@@ -189,5 +195,34 @@ describe('armazenamento', () => {
     addMentoriaHelp(help)
     clearMentoriaHelps('char-1')
     expect(loadMentoriaHelps()).toHaveLength(0)
+  })
+
+  it('salva, atualiza e exclui cenas de combate', () => {
+    const first = addCombatant(
+      createEncounter('Emboscada'),
+      createNpcCombatant({
+        name: 'Capanga',
+        pvMax: 6,
+        pdMax: 4,
+        initiative: 5,
+      }),
+    )
+    const second = createEncounter('Perseguição')
+
+    saveEncounters([first])
+    expect(loadEncounters()).toHaveLength(1)
+    expect(getEncounter(first.id)?.name).toBe('Emboscada')
+
+    upsertEncounter(second)
+    expect(loadEncounters()).toHaveLength(2)
+    expect(getEncounter(second.id)?.name).toBe('Perseguição')
+
+    upsertEncounter({ ...first, name: 'Emboscada noturna' })
+    expect(getEncounter(first.id)?.name).toBe('Emboscada noturna')
+    expect(loadEncounters()).toHaveLength(2)
+
+    deleteEncounter(first.id)
+    expect(getEncounter(first.id)).toBeUndefined()
+    expect(loadEncounters()).toHaveLength(1)
   })
 })

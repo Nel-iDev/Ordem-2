@@ -238,7 +238,8 @@ export function AbilityList({ character, onAdd, onRemove, onChange }: AbilityLis
               )}
             </div>
             <p className="ability-hint">
-              A rodada extra é resolvida manualmente na mesa.
+              Ative antes do combate. A mesa em “Combate” executa a rodada extra
+              antes da rodada 1.
             </p>
           </div>
         )
