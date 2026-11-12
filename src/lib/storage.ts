@@ -15,9 +15,11 @@ import {
 } from './character'
 import { normalizeEncounter } from './combat'
 import { dieMax } from './dice'
+import { isRollHistoryFilter, type RollHistoryFilter } from './rollHistory'
 
 const CHARACTER_KEY = 'arquivo2.characters.v1'
 const ROLL_KEY = 'arquivo2.rolls.v1'
+const ROLL_FILTER_KEY = 'arquivo2.rollFilters.v1'
 const MENTORIA_KEY = 'arquivo2.mentoria.v1'
 const COMBAT_KEY = 'arquivo2.combats.v1'
 const CAMPAIGN_KEY = 'arquivo2.campaigns.v1'
@@ -149,6 +151,7 @@ export function deleteCharacter(id: string) {
   saveCharacters(loadCharacters().filter((character) => character.id !== id))
   clearMentoriaHelps(id)
   removeCharacterFromCampaigns(id)
+  removeRollHistoryFilter(id)
 }
 
 function isMentoriaHelp(value: unknown): value is MentoriaHelp {
@@ -225,6 +228,42 @@ export function addRoll(roll: RollRecord) {
 export function clearRolls(characterId: string) {
   const rolls = loadRolls().filter((roll) => roll.characterId !== characterId)
   localStorage.setItem(ROLL_KEY, JSON.stringify(rolls))
+}
+
+function loadRollFilters(): Record<string, RollHistoryFilter> {
+  const raw = safeParse<unknown>(readStorage(ROLL_FILTER_KEY), {})
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const filters: Record<string, RollHistoryFilter> = {}
+  for (const [characterId, value] of Object.entries(raw)) {
+    if (isRollHistoryFilter(value)) filters[characterId] = value
+  }
+  return filters
+}
+
+export function loadRollHistoryFilter(characterId: string): RollHistoryFilter {
+  return loadRollFilters()[characterId] ?? 'all'
+}
+
+export function saveRollHistoryFilter(characterId: string, filter: RollHistoryFilter) {
+  const filters = loadRollFilters()
+  if (filter === 'all') delete filters[characterId]
+  else filters[characterId] = filter
+  try {
+    localStorage.setItem(ROLL_FILTER_KEY, JSON.stringify(filters))
+  } catch {
+    // A preferência de visualização é opcional; a ficha continua funcionando.
+  }
+}
+
+function removeRollHistoryFilter(characterId: string) {
+  try {
+    const filters = loadRollFilters()
+    if (!(characterId in filters)) return
+    delete filters[characterId]
+    localStorage.setItem(ROLL_FILTER_KEY, JSON.stringify(filters))
+  } catch {
+    // A ficha já foi removida; uma falha ao limpar a preferência não deve desfazer isso.
+  }
 }
 
 export function loadEncounters(): CombatEncounter[] {

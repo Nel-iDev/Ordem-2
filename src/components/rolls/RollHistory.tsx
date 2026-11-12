@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, Trash2 } from 'lucide-react'
 import type { RollRecord } from '../../types'
-import { clearRolls, loadRolls } from '../../lib/storage'
+import {
+  ROLL_HISTORY_FILTERS,
+  matchesRollHistoryFilter,
+  type RollHistoryFilter,
+} from '../../lib/rollHistory'
+import {
+  clearRolls,
+  loadRollHistoryFilter,
+  loadRolls,
+  saveRollHistoryFilter,
+} from '../../lib/storage'
 import { formatDate } from '../../lib/utils'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 
@@ -9,22 +19,6 @@ interface RollHistoryProps {
   characterId: string
   reloadToken: number
   onCleared: () => void
-}
-
-type HistoryFilter = 'all' | 'success' | 'failure' | 'critical'
-
-const FILTERS: Array<{ id: HistoryFilter; label: string }> = [
-  { id: 'all', label: 'Todas' },
-  { id: 'success', label: 'Sucessos' },
-  { id: 'failure', label: 'Falhas' },
-  { id: 'critical', label: 'Críticas' },
-]
-
-function matchesFilter(roll: RollRecord, filter: HistoryFilter): boolean {
-  if (filter === 'success') return roll.success
-  if (filter === 'failure') return !roll.success
-  if (filter === 'critical') return roll.critical || roll.criticalFailure
-  return true
 }
 
 function verdictLabel(roll: RollRecord): string {
@@ -44,7 +38,9 @@ function verdictClass(roll: RollRecord): string {
 export function RollHistory({ characterId, reloadToken, onCleared }: RollHistoryProps) {
   const [confirming, setConfirming] = useState(false)
   const [version, setVersion] = useState(0)
-  const [filter, setFilter] = useState<HistoryFilter>('all')
+  const [filter, setFilter] = useState<RollHistoryFilter>(() =>
+    loadRollHistoryFilter(characterId),
+  )
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const rolls = useMemo<RollRecord[]>(() => {
@@ -55,15 +51,20 @@ export function RollHistory({ characterId, reloadToken, onCleared }: RollHistory
   }, [characterId, reloadToken, version])
 
   const filtered = useMemo(
-    () => rolls.filter((roll) => matchesFilter(roll, filter)),
+    () => rolls.filter((roll) => matchesRollHistoryFilter(roll, filter)),
     [rolls, filter],
   )
+
+  const changeFilter = (next: RollHistoryFilter) => {
+    setFilter(next)
+    saveRollHistoryFilter(characterId, next)
+  }
 
   const handleClear = () => {
     clearRolls(characterId)
     setVersion((current) => current + 1)
     setExpanded({})
-    setFilter('all')
+    changeFilter('all')
     setConfirming(false)
     onCleared()
   }
@@ -87,9 +88,9 @@ export function RollHistory({ characterId, reloadToken, onCleared }: RollHistory
             <span className="sr-only">Filtrar rolagens por resultado</span>
             <select
               value={filter}
-              onChange={(event) => setFilter(event.target.value as HistoryFilter)}
+              onChange={(event) => changeFilter(event.target.value as RollHistoryFilter)}
             >
-              {FILTERS.map((option) => (
+              {ROLL_HISTORY_FILTERS.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>

@@ -14,6 +14,8 @@ Fichas de personagem, perícias e rolagens para um RPG de investigação paranor
 - **Rolagem integrada** — teste de atributo + perícia (+ até 2d4 de bônus), DT configurável,
   regra dos 4 dados / 3 maiores, RA/RB, sucesso e falha críticos, tabela de 1d8 com aplicação
   automática de consequências (PV, PD e condições).
+- **Histórico de rolagens** — entradas expansíveis com os dados rolados e filtro por sucesso,
+  falha ou crítica. A escolha do filtro é lembrada por ficha.
 - **Salvamento automático** — cada alteração na ficha é gravada no `localStorage` após uma
   pequena pausa, com indicador de "Salvando…"/"Salvo".
 - **Habilidades automatizadas** — custos em PD, cargas, escolhas de perícia, bônus de
@@ -125,6 +127,13 @@ npm run lint    # oxlint
 npm test        # Vitest (execução única)
 ```
 
+## Testes
+
+Os testes de regras e persistência rodam em Node. Os testes de interface usam `jsdom` apenas
+nos arquivos que declaram `// @vitest-environment jsdom` no topo, com
+`@testing-library/react` e `@testing-library/user-event`; assim a maior parte da suíte
+continua rápida e sem DOM.
+
 ## Estrutura
 
 ```
@@ -158,10 +167,11 @@ rotas como `/ficha/:id`, `/combate` e `/campanhas/:id` diretamente no Pages.
 ## Armazenamento local
 
 As fichas ficam em `localStorage` sob a chave `arquivo2.characters.v1`, as rolagens em
-`arquivo2.rolls.v1`, as ajudas pendentes de Mentoria em `arquivo2.mentoria.v1`, as cenas de
-combate em `arquivo2.combats.v1` e as campanhas com suas sessões em
-`arquivo2.campaigns.v1`. As duas primeiras chaves foram mantidas para preservar fichas criadas
-antes da renomeação para **Ordem 2**. Limpar os dados do site no navegador apaga tudo — use
+`arquivo2.rolls.v1`, as preferências de filtro do histórico em `arquivo2.rollFilters.v1`, as
+ajudas pendentes de Mentoria em `arquivo2.mentoria.v1`, as cenas de combate em
+`arquivo2.combats.v1` e as campanhas com suas sessões em `arquivo2.campaigns.v1`. As chaves de
+fichas e rolagens foram mantidas para preservar dados criados antes da renomeação para
+**Ordem 2**. Limpar os dados do site no navegador apaga tudo — use
 **Exportar tudo** no arquivo para manter um backup em JSON. A importação aceita uma ficha ou
 uma lista e gera novos IDs para registros que colidam com fichas já existentes.
 

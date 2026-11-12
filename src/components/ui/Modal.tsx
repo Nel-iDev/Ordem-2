@@ -14,6 +14,12 @@ interface ModalProps {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
+function isVisible(element: HTMLElement): boolean {
+  if (element.hidden || element.closest('[hidden]')) return false
+  const style = window.getComputedStyle(element)
+  return style.display !== 'none' && style.visibility !== 'hidden'
+}
+
 export function Modal({ title, description, children, footer, onClose, wide }: ModalProps) {
   const titleId = useId()
   const descriptionId = useId()
@@ -54,7 +60,7 @@ export function Modal({ title, description, children, footer, onClose, wide }: M
 
       const focusable = Array.from(
         panel.querySelectorAll<HTMLElement>(FOCUSABLE),
-      ).filter((element) => element.offsetParent !== null)
+      ).filter(isVisible)
 
       if (!focusable.length) {
         event.preventDefault()

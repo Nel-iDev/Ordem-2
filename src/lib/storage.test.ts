@@ -20,12 +20,14 @@ import {
   loadCharacters,
   loadEncounters,
   loadMentoriaHelps,
+  loadRollHistoryFilter,
   loadRolls,
   normalizeCharacter,
   parseImportedCharacters,
   saveCampaigns,
   saveCharacters,
   saveEncounters,
+  saveRollHistoryFilter,
   upsertCampaign,
   upsertCharacter,
   upsertEncounter,
@@ -269,5 +271,41 @@ describe('armazenamento', () => {
     expect(getCharacter(character.id)).toBeUndefined()
     expect(getCampaign(campaign.id)?.characterIds).toEqual([])
     expect(getCampaign(campaign.id)?.name).toBe('Mesa')
+  })
+
+  it('persiste o filtro do histórico por ficha', () => {
+    expect(loadRollHistoryFilter('char-1')).toBe('all')
+
+    saveRollHistoryFilter('char-1', 'success')
+    saveRollHistoryFilter('char-2', 'critical')
+
+    expect(loadRollHistoryFilter('char-1')).toBe('success')
+    expect(loadRollHistoryFilter('char-2')).toBe('critical')
+
+    saveRollHistoryFilter('char-1', 'all')
+    expect(loadRollHistoryFilter('char-1')).toBe('all')
+    expect(loadRollHistoryFilter('char-2')).toBe('critical')
+  })
+
+  it('ignora filtros inválidos e remove a preferência ao excluir a ficha', () => {
+    localStorage.setItem(
+      'arquivo2.rollFilters.v1',
+      JSON.stringify({ 'char-1': 'invalido', 'char-2': 'failure' }),
+    )
+
+    expect(loadRollHistoryFilter('char-1')).toBe('all')
+    expect(loadRollHistoryFilter('char-2')).toBe('failure')
+
+    const character = createEmptyCharacter({ name: 'Helena' })
+    saveCharacters([character])
+    saveRollHistoryFilter(character.id, 'critical')
+    deleteCharacter(character.id)
+
+    expect(loadRollHistoryFilter(character.id)).toBe('all')
+  })
+
+  it('tolera JSON inválido nas preferências de filtro', () => {
+    localStorage.setItem('arquivo2.rollFilters.v1', '{')
+    expect(loadRollHistoryFilter('char-1')).toBe('all')
   })
 })
