@@ -11,25 +11,76 @@ interface ModalProps {
   wide?: boolean
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 export function Modal({ title, description, children, footer, onClose, wide }: ModalProps) {
   const titleId = useId()
+  const descriptionId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const field = panelRef.current?.querySelector<HTMLElement>(
+      'input:not([disabled]), select:not([disabled]), textarea:not([disabled])',
+    )
+    const fallback = panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)
+    const initial = field ?? fallback
+    initial?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      restoreFocusRef.current?.focus()
+    }
+  }, [])
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const panel = panelRef.current
+      if (!panel) return
+
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(FOCUSABLE),
+      ).filter((element) => element.offsetParent !== null)
+
+      if (!focusable.length) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (!panel.contains(document.activeElement)) {
+        event.preventDefault()
+        first.focus()
+        return
+      }
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', handleKey)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const focusable = panelRef.current?.querySelector<HTMLElement>(
-      'input, select, textarea, button, [tabindex]:not([tabindex="-1"])',
-    )
-    focusable?.focus()
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = previousOverflow
-    }
+    return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
 
   return createPortal(
@@ -45,11 +96,12 @@ export function Modal({ title, description, children, footer, onClose, wide }: M
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
       >
         <div className="modal-head">
           <div>
             <h2 id={titleId}>{title}</h2>
-            {description ? <p>{description}</p> : null}
+            {description ? <p id={descriptionId}>{description}</p> : null}
           </div>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Fechar">
             <X aria-hidden="true" />

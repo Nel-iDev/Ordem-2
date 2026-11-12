@@ -82,7 +82,7 @@ export function CampaignDetailPage() {
           <div className="empty-state-icon">
             <BookOpen aria-hidden="true" />
           </div>
-          <h2>Campanha não encontrada</h2>
+          <h1 className="empty-state-title">Campanha não encontrada</h1>
           <p>Ela pode ter sido excluída ou o endereço está incorreto.</p>
           <Link to="/campanhas" className="btn btn-primary">
             Ver campanhas
@@ -221,16 +221,28 @@ export function CampaignDetailPage() {
           </div>
           <div className="panel-body">
             {sessions.length ? (
-              <div className="session-list">
+              <ol className="session-list">
                 {sessions.map((session) => (
-                  <article key={session.id} className="session-item">
+                  <li
+                    key={session.id}
+                    className="session-item"
+                    aria-labelledby={`session-title-${session.id}`}
+                  >
                     <div className="session-head">
                       <div>
-                        <h3 className="session-title">{session.title}</h3>
-                        <span className="session-date">
+                        <h2
+                          id={`session-title-${session.id}`}
+                          className="session-title"
+                        >
+                          {session.title}
+                        </h2>
+                        <time
+                          className="session-date"
+                          dateTime={session.date || undefined}
+                        >
                           <CalendarDays size={13} aria-hidden="true" />
                           {formatSessionDate(session.date)}
-                        </span>
+                        </time>
                       </div>
                       <div className="session-actions">
                         <button
@@ -264,13 +276,13 @@ export function CampaignDetailPage() {
                         Sem resumo ou anotações.
                       </p>
                     ) : null}
-                  </article>
+                  </li>
                 ))}
-              </div>
+              </ol>
             ) : (
               <div className="session-empty">
                 <NotebookPen aria-hidden="true" />
-                <h3>Nenhuma sessão registrada</h3>
+                <h2>Nenhuma sessão registrada</h2>
                 <p>
                   Registre o que o grupo descobriu, enfrentou ou decidiu para manter a
                   crônica da mesa.
@@ -296,9 +308,9 @@ export function CampaignDetailPage() {
             </div>
             <div className="panel-body">
               {roster.length ? (
-                <div className="campaign-roster">
+                <ul className="campaign-roster">
                   {roster.map(({ characterId, character }) => (
-                    <div key={characterId} className="campaign-roster-item">
+                    <li key={characterId} className="campaign-roster-item">
                       {character ? (
                         <>
                           <Avatar
@@ -328,14 +340,12 @@ export function CampaignDetailPage() {
                           </Link>
                         </>
                       ) : (
-                        <>
-                          <div className="campaign-roster-missing grow">
-                            <strong>Ficha removida</strong>
-                            <span className="campaign-roster-sub">
-                              O vínculo aponta para uma ficha que não existe mais.
-                            </span>
-                          </div>
-                        </>
+                        <div className="campaign-roster-missing grow">
+                          <strong>Ficha removida</strong>
+                          <span className="campaign-roster-sub">
+                            O vínculo aponta para uma ficha que não existe mais.
+                          </span>
+                        </div>
                       )}
                       <button
                         type="button"
@@ -346,9 +356,9 @@ export function CampaignDetailPage() {
                       >
                         <Trash2 aria-hidden="true" />
                       </button>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
                 <p className="small muted">
                   Nenhum agente vinculado. Adicione fichas do arquivo para montar o elenco.

@@ -160,9 +160,14 @@ export function CampaignsPage() {
                   <article key={campaign.id} className="campaign-card">
                     <div className="campaign-card-head">
                       <div>
-                        <Link to={`/campanhas/${campaign.id}`} className="campaign-card-title">
-                          {campaign.name}
-                        </Link>
+                        <h2 className="campaign-card-title">
+                          <Link
+                            to={`/campanhas/${campaign.id}`}
+                            className="campaign-card-link"
+                          >
+                            {campaign.name}
+                          </Link>
+                        </h2>
                         <p className="campaign-card-desc">
                           {campaign.description || 'Sem descrição registrada.'}
                         </p>
@@ -184,7 +189,9 @@ export function CampaignsPage() {
                     <div className="campaign-card-footer">
                       <span>
                         {lastSession
-                          ? `Última sessão: ${formatSessionDate(lastSession.date)}`
+                          ? lastSession.date
+                            ? `Última sessão: ${formatSessionDate(lastSession.date)}`
+                            : 'Última sessão registrada'
                           : `Atualizada em ${formatDate(campaign.updatedAt)}`}
                       </span>
                       <div className="campaign-card-actions">

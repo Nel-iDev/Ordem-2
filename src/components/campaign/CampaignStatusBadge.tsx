@@ -10,6 +10,7 @@ const TONE: Record<CampaignStatus, string> = {
 export function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   return (
     <span className={`badge ${TONE[status]}`.trim()}>
+      <span className="sr-only">Status: </span>
       {CAMPAIGN_STATUS_LABEL[status]}
     </span>
   )

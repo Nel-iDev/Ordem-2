@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { todayIsoDate } from '../../lib/campaigns'
 import { Modal } from '../ui/Modal'
 
@@ -39,6 +39,7 @@ export function SessionFormDialog({
   const [summary, setSummary] = useState(base.summary)
   const [notes, setNotes] = useState(base.notes)
   const [error, setError] = useState('')
+  const errorId = useId()
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -84,6 +85,8 @@ export function SessionFormDialog({
               }}
               placeholder="Ex.: O casarão na Rua Bela"
               required
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? errorId : undefined}
             />
           </label>
           <label className="field">
@@ -116,7 +119,11 @@ export function SessionFormDialog({
             placeholder="Pistas, NPCs, ganchos e consequências."
           />
         </label>
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error" id={errorId} role="alert">
+            {error}
+          </p>
+        ) : null}
       </form>
     </Modal>
   )

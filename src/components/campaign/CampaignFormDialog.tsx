@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import type { CampaignStatus } from '../../types'
 import { CAMPAIGN_STATUSES, CAMPAIGN_STATUS_LABEL } from '../../lib/campaigns'
 import { Modal } from '../ui/Modal'
@@ -34,6 +34,7 @@ export function CampaignFormDialog({
   const [description, setDescription] = useState(initial.description)
   const [status, setStatus] = useState<CampaignStatus>(initial.status)
   const [error, setError] = useState('')
+  const errorId = useId()
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -73,6 +74,8 @@ export function CampaignFormDialog({
             }}
             placeholder="Ex.: Operação Véu Negro"
             required
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
           />
         </label>
         <label className="field">
@@ -99,7 +102,11 @@ export function CampaignFormDialog({
             placeholder="Premissa, tom, objetivos e o que a mesa precisa lembrar."
           />
         </label>
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error" id={errorId} role="alert">
+            {error}
+          </p>
+        ) : null}
       </form>
     </Modal>
   )

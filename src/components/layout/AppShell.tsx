@@ -4,6 +4,9 @@ import { BookOpen, Plus, Skull, Swords } from 'lucide-react'
 export function AppShell() {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#conteudo">
+        Pular para o conteúdo
+      </a>
       <header className="app-header">
         <div className="container app-header-inner">
           <NavLink to="/" className="brand" aria-label="Ordem 2 — início">
@@ -47,7 +50,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main id="conteudo" className="app-main">
         <Outlet />
       </main>
 
