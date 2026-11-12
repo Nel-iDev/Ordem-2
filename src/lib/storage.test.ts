@@ -2,25 +2,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RollRecord } from '../types'
 import { createEmptyCharacter } from './character'
 import { addCombatant, createEncounter, createNpcCombatant } from './combat'
+import { addCharacterToCampaign, createCampaign, patchCampaign } from './campaigns'
 import {
   addMentoriaHelp,
   addRoll,
   clearMentoriaHelps,
   clearRolls,
   consumeMentoriaHelp,
+  deleteCampaign,
   deleteCharacter,
   deleteEncounter,
   duplicateCharacter,
+  getCampaign,
   getCharacter,
   getEncounter,
+  loadCampaigns,
   loadCharacters,
   loadEncounters,
   loadMentoriaHelps,
   loadRolls,
   normalizeCharacter,
   parseImportedCharacters,
+  saveCampaigns,
   saveCharacters,
   saveEncounters,
+  upsertCampaign,
   upsertCharacter,
   upsertEncounter,
 } from './storage'
@@ -224,5 +230,44 @@ describe('armazenamento', () => {
     deleteEncounter(first.id)
     expect(getEncounter(first.id)).toBeUndefined()
     expect(loadEncounters()).toHaveLength(1)
+  })
+
+  it('salva, atualiza e exclui campanhas', () => {
+    const first = patchCampaign(createCampaign('Operação Véu Negro'), {
+      status: 'pausada',
+      description: 'Mesa principal',
+    })
+    const second = createCampaign('Crônicas')
+
+    saveCampaigns([first])
+    expect(loadCampaigns()).toHaveLength(1)
+    expect(getCampaign(first.id)?.status).toBe('pausada')
+
+    upsertCampaign(second)
+    expect(loadCampaigns()).toHaveLength(2)
+    expect(getCampaign(second.id)?.name).toBe('Crônicas')
+
+    upsertCampaign({ ...first, name: 'Operação Véu Negro II' })
+    expect(getCampaign(first.id)?.name).toBe('Operação Véu Negro II')
+    expect(loadCampaigns()).toHaveLength(2)
+
+    deleteCampaign(first.id)
+    expect(getCampaign(first.id)).toBeUndefined()
+    expect(loadCampaigns()).toHaveLength(1)
+  })
+
+  it('desvincula a ficha de todas as campanhas ao excluir o personagem', () => {
+    const character = createEmptyCharacter({ name: 'Helena' })
+    saveCharacters([character])
+
+    const campaign = addCharacterToCampaign(createCampaign('Mesa'), character.id)
+    saveCampaigns([campaign])
+    expect(getCampaign(campaign.id)?.characterIds).toEqual([character.id])
+
+    deleteCharacter(character.id)
+
+    expect(getCharacter(character.id)).toBeUndefined()
+    expect(getCampaign(campaign.id)?.characterIds).toEqual([])
+    expect(getCampaign(campaign.id)?.name).toBe('Mesa')
   })
 })

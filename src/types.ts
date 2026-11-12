@@ -257,3 +257,28 @@ export interface CombatEncounter {
   createdAt: number
   updatedAt: number
 }
+
+export type CampaignStatus = 'ativa' | 'pausada' | 'encerrada'
+
+export interface CampaignSession {
+  id: string
+  title: string
+  /** Data da sessão no formato YYYY-MM-DD; vazio quando não informada. */
+  date: string
+  summary: string
+  notes: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface Campaign {
+  id: string
+  name: string
+  description: string
+  status: CampaignStatus
+  /** Fichas vinculadas. A campanha guarda apenas os IDs para refletir a ficha atual. */
+  characterIds: string[]
+  sessions: CampaignSession[]
+  createdAt: number
+  updatedAt: number
+}

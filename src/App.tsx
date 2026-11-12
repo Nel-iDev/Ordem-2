@@ -3,6 +3,8 @@ import { ToastProvider } from './context/ToastContext'
 import { CharactersProvider } from './context/CharactersContext'
 import { AppShell } from './components/layout/AppShell'
 import { ArchivePage } from './pages/ArchivePage'
+import { CampaignDetailPage } from './pages/CampaignDetailPage'
+import { CampaignsPage } from './pages/CampaignsPage'
 import { CombatPage } from './pages/CombatPage'
 import { CreationPage } from './pages/CreationPage'
 import { SheetPage } from './pages/SheetPage'
@@ -21,6 +23,8 @@ function App() {
               <Route index element={<ArchivePage />} />
               <Route path="nova" element={<CreationPage />} />
               <Route path="combate" element={<CombatPage />} />
+              <Route path="campanhas" element={<CampaignsPage />} />
+              <Route path="campanhas/:id" element={<CampaignDetailPage />} />
               <Route path="ficha/:id" element={<SheetPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

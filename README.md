@@ -21,6 +21,8 @@ Fichas de personagem, perícias e rolagens para um RPG de investigação paranor
   "Ativa", "Disponível" ou "Requisito pendente" em cada habilidade.
 - **Mesa de combate** — cenas com ordem de iniciativa, rodada extra de Prontidão, turno
   atual, PV/PD de agentes e NPCs, condições e marcação de participantes fora de combate.
+- **Campanhas e sessões** — mesas com status (ativa, pausada ou encerrada), elenco vinculado
+  às fichas do arquivo e diário de sessões com data, resumo e anotações.
 
 ## Regras de PV e PD (playtest)
 
@@ -91,6 +93,22 @@ A mesa fica em `/combate` e guarda cada cena separadamente. O motor de regras es
   antes do início e cobra os 3 PD. A ordem de iniciativa, os valores de PV/PD de NPCs e a
   decisão de quando um participante está fora de combate ficam a cargo da mesa.
 
+## Campanhas e sessões
+
+A lista fica em `/campanhas` e cada campanha em `/campanhas/:id`. O motor de regras está em
+`src/lib/campaigns.ts` e a persistência em `arquivo2.campaigns.v1`.
+
+- **Organização, não automação de regras** — a campanha reúne fichas e registra sessões; ela
+  não calcula XP, níveis ou recompensas. O material atual não define esses fluxos.
+- **Elenco** — a campanha guarda apenas os IDs das fichas, então nome, perfil, nível e PV/PD
+  exibidos vêm sempre da ficha atual. Excluir um personagem o desvincula automaticamente de
+  todas as campanhas, sem apagar o histórico das sessões.
+- **Status** — `ativa`, `pausada` ou `encerrada`; o status é informativo e não bloqueia
+  edições.
+- **Sessões** — título, data (`AAAA-MM-DD`), resumo e anotações, ordenadas da mais recente
+  para a mais antiga. Sessões sem data usam a data de criação como referência de ordem.
+- **Exclusão** — apagar uma campanha remove suas sessões, mas mantém as fichas no arquivo.
+
 ## Requisitos
 
 - Node.js 20 ou superior
@@ -117,7 +135,7 @@ src/
   data/         # perfis, ocupações, perícias e regras
   hooks/        # useDebouncedSave
   lib/          # motor de regras (dice, character, abilities, combat, storage) + testes
-  pages/        # Arquivo, criação, ficha, combate e 404
+  pages/        # Arquivo, criação, ficha, combate, campanhas e 404
   types.ts      # tipos do domínio
 ```
 
@@ -135,16 +153,17 @@ e o `BrowserRouter` recebe `basename` a partir de `import.meta.env.BASE_URL`. Pa
 domínio próprio ou na raiz, rode o build com `VITE_BASE="/"`.
 
 O workflow copia `dist/index.html` para `dist/404.html`, o que permite abrir ou recarregar
-rotas como `/ficha/:id` e `/combate` diretamente no Pages.
+rotas como `/ficha/:id`, `/combate` e `/campanhas/:id` diretamente no Pages.
 
 ## Armazenamento local
 
 As fichas ficam em `localStorage` sob a chave `arquivo2.characters.v1`, as rolagens em
-`arquivo2.rolls.v1`, as ajudas pendentes de Mentoria em `arquivo2.mentoria.v1` e as cenas de
-combate em `arquivo2.combats.v1`. As duas primeiras chaves foram mantidas para preservar
-fichas criadas antes da renomeação para **Ordem 2**. Limpar os dados do site no navegador apaga tudo — use **Exportar tudo** no
-arquivo para manter um backup em JSON. A importação aceita uma ficha ou uma lista e gera novos
-IDs para registros que colidam com fichas já existentes.
+`arquivo2.rolls.v1`, as ajudas pendentes de Mentoria em `arquivo2.mentoria.v1`, as cenas de
+combate em `arquivo2.combats.v1` e as campanhas com suas sessões em
+`arquivo2.campaigns.v1`. As duas primeiras chaves foram mantidas para preservar fichas criadas
+antes da renomeação para **Ordem 2**. Limpar os dados do site no navegador apaga tudo — use
+**Exportar tudo** no arquivo para manter um backup em JSON. A importação aceita uma ficha ou
+uma lista e gera novos IDs para registros que colidam com fichas já existentes.
 
 > As aptidões não entram no orçamento de 8 passos de perícia; elas são especializações
 > adicionais.

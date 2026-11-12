@@ -1,5 +1,12 @@
-import type { Character, CombatEncounter, MentoriaHelp, RollRecord } from '../types'
+import type {
+  Campaign,
+  Character,
+  CombatEncounter,
+  MentoriaHelp,
+  RollRecord,
+} from '../types'
 import { normalizeAbilityState } from './abilities'
+import { normalizeCampaign } from './campaigns'
 import {
   createEmptyCharacter,
   createId,
@@ -13,6 +20,7 @@ const CHARACTER_KEY = 'arquivo2.characters.v1'
 const ROLL_KEY = 'arquivo2.rolls.v1'
 const MENTORIA_KEY = 'arquivo2.mentoria.v1'
 const COMBAT_KEY = 'arquivo2.combats.v1'
+const CAMPAIGN_KEY = 'arquivo2.campaigns.v1'
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback
@@ -140,6 +148,7 @@ export function upsertCharacter(character: Character) {
 export function deleteCharacter(id: string) {
   saveCharacters(loadCharacters().filter((character) => character.id !== id))
   clearMentoriaHelps(id)
+  removeCharacterFromCampaigns(id)
 }
 
 function isMentoriaHelp(value: unknown): value is MentoriaHelp {
@@ -250,6 +259,60 @@ export function upsertEncounter(encounter: CombatEncounter) {
 
 export function deleteEncounter(id: string) {
   saveEncounters(loadEncounters().filter((encounter) => encounter.id !== id))
+}
+
+export function loadCampaigns(): Campaign[] {
+  const raw = safeParse<unknown>(readStorage(CAMPAIGN_KEY), [])
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter(
+      (entry): entry is Partial<Campaign> =>
+        Boolean(entry) && typeof entry === 'object',
+    )
+    .map((entry) => normalizeCampaign(entry))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 50)
+}
+
+export function saveCampaigns(campaigns: Campaign[]) {
+  localStorage.setItem(CAMPAIGN_KEY, JSON.stringify(campaigns))
+}
+
+export function getCampaign(id: string): Campaign | undefined {
+  return loadCampaigns().find((campaign) => campaign.id === id)
+}
+
+export function upsertCampaign(campaign: Campaign) {
+  const campaigns = loadCampaigns()
+  const index = campaigns.findIndex((entry) => entry.id === campaign.id)
+  const next = { ...campaign, updatedAt: Date.now() }
+  if (index >= 0) campaigns[index] = next
+  else campaigns.unshift(next)
+  saveCampaigns(campaigns)
+}
+
+export function deleteCampaign(id: string) {
+  saveCampaigns(loadCampaigns().filter((campaign) => campaign.id !== id))
+}
+
+/** Remove a ficha das campanhas sem impedir a exclusão da ficha. */
+function removeCharacterFromCampaigns(characterId: string) {
+  try {
+    const campaigns = loadCampaigns()
+    let changed = false
+    const next = campaigns.map((campaign) => {
+      if (!campaign.characterIds.includes(characterId)) return campaign
+      changed = true
+      return {
+        ...campaign,
+        characterIds: campaign.characterIds.filter((id) => id !== characterId),
+        updatedAt: Date.now(),
+      }
+    })
+    if (changed) saveCampaigns(next)
+  } catch {
+    // A ficha já foi removida; uma falha ao limpar campanhas não deve desfazer isso.
+  }
 }
 
 export function parseImportedCharacters(text: string): Character[] {

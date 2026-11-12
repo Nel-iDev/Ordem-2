@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Plus, Skull, Swords } from 'lucide-react'
+import { BookOpen, Plus, Skull, Swords } from 'lucide-react'
 
 export function AppShell() {
   return (
@@ -29,6 +29,13 @@ export function AppShell() {
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
             >
               <Swords size={14} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> Combate
+            </NavLink>
+            <NavLink
+              to="/campanhas"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              <BookOpen size={14} aria-hidden="true" style={{ verticalAlign: '-2px' }} />{' '}
+              Campanhas
             </NavLink>
             <NavLink
               to="/nova"
