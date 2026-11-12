@@ -338,6 +338,10 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
         ? 'Sucesso'
         : 'Falha'
 
+  const resultAnnouncement = result
+    ? `Teste de ${skill.name}: ${verdictLabel}. Total ${result.total} contra DT ${result.dt}. RA ${result.ra}, RB ${result.rb}, ${result.dice.filter((die) => die.counted).length} dados contados.`
+    : ''
+
   return (
     <Modal
       title={`Teste de ${skill.name}`}
@@ -371,6 +375,9 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
         )
       }
     >
+      <p className="sr-only" role="status" aria-live="polite">
+        {resultAnnouncement}
+      </p>
       {!result ? (
         <>
           <div className="roll-summary">
@@ -527,7 +534,7 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
           ) : null}
 
           {!canAfford ? (
-            <p className="error-list" style={{ marginTop: 0 }}>
+            <p className="error-list" style={{ marginTop: 0 }} role="alert">
               Recursos insuficientes para os bônus selecionados.
             </p>
           ) : null}
@@ -543,18 +550,21 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
               <span className={`roll-verdict ${verdictClass}`}>{verdictLabel}</span>
             </div>
 
-            <div className="roll-dice">
+            <ul className="roll-dice" aria-label="Dados rolados">
               {result.dice.map((entry, index) => (
-                <div
+                <li
                   key={`${entry.label}-${index}`}
                   className={`roll-die${entry.counted ? ' counted' : ''}`}
                 >
                   <DieIcon die={entry.die} attr={skill.attr} size={20} />
                   <span className="roll-die-value">{entry.value}</span>
                   <span className="roll-die-label">{entry.label}</span>
-                </div>
+                  <span className="sr-only">
+                    {entry.counted ? 'contado' : 'descartado'}
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
 
             <div className="roll-metadata">
               <span>
@@ -593,7 +603,7 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
                   </button>
                 ) : (
                   <div>
-                    <div className="critical-roll">
+                    <div className="critical-roll" role="status" aria-live="polite">
                       <strong>{criticalRoll}</strong>
                       <span>
                         {criticalEntry?.name}: {criticalEntry?.description}
@@ -609,7 +619,7 @@ export function RollDialog({ character, skill, onClose, onSave }: RollDialogProp
                         Aplicar consequência
                       </button>
                     ) : (
-                      <p className="small muted" style={{ marginTop: 8 }}>
+                      <p className="small muted" role="status" style={{ marginTop: 8 }}>
                         {criticalApplied
                           ? 'Consequência aplicada.'
                           : 'Sem efeito automático — combine com o mestre.'}

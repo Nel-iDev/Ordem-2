@@ -81,7 +81,7 @@ export function SkillList({
                         {skill.name}
                       </button>
                     </td>
-                    <td>
+                    <td className="skill-cell-attr">
                       <span className={`attr-chip attr-chip-${attribute.key}`}>
                         {ATTR_LABEL[attribute.key]}
                       </span>
@@ -161,7 +161,7 @@ export function SkillList({
                       {aptitude.name}
                     </button>
                   </td>
-                  <td>
+                  <td className="skill-cell-attr">
                     <span className="attr-chip attr-chip-mente">
                       {ATTR_LABEL.mente}
                     </span>

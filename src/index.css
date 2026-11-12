@@ -2125,6 +2125,30 @@ img {
 
 /* Histórico */
 
+.roll-history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.roll-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roll-history-filter select {
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
 .roll-history {
   display: flex;
   flex-direction: column;
@@ -2132,13 +2156,27 @@ img {
 }
 
 .roll-entry {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.roll-entry-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.roll-entry-summary:hover {
+  background: var(--surface-2);
 }
 
 .roll-entry-info {
@@ -2176,6 +2214,62 @@ img {
 }
 .roll-entry-total.crit {
   color: var(--amber);
+}
+
+.roll-entry-chevron {
+  flex: 0 0 auto;
+  color: var(--muted-2);
+  transition: transform 0.15s ease;
+}
+
+.roll-entry-chevron.open {
+  transform: rotate(180deg);
+}
+
+.roll-entry-details {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.roll-entry-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.roll-entry-dice li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 58px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  opacity: 0.5;
+}
+
+.roll-entry-dice li.counted {
+  opacity: 1;
+  border-color: var(--line-strong);
+}
+
+.roll-entry-die-value {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.roll-entry-die-meta {
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  text-align: center;
 }
 
 /* ==========================================================================
@@ -3457,6 +3551,12 @@ img {
     padding: 10px 14px;
     font-size: 0.64rem;
     letter-spacing: 0.1em;
+    min-height: 40px;
+  }
+
+  .sheet-head-actions .icon-btn {
+    width: 40px;
+    height: 40px;
   }
 
   .sheet-tab-body {
@@ -3479,8 +3579,46 @@ img {
     width: 150px;
   }
 
-  .skill-row-actions .stepper {
+  .skills-table .skill-col-attr,
+  .skills-table .skill-cell-attr {
     display: none;
+  }
+
+  .skill-row-actions {
+    gap: 6px;
+  }
+
+  .skill-row-actions .stepper button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .skill-roll-btn {
+    min-height: 34px;
+  }
+
+  .roll-history-toolbar {
+    align-items: flex-start;
+  }
+
+  .roll-history-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .roll-entry-summary {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 12px;
+  }
+
+  .roll-entry-info {
+    flex: 1 1 100%;
+  }
+
+  .roll-entry-total {
+    min-width: auto;
+    margin-left: auto;
   }
 
   .ability-list {

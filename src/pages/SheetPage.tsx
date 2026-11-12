@@ -1,8 +1,10 @@
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent,
   type ReactNode,
 } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -74,6 +76,7 @@ function SheetView({ id }: { id: string }) {
   const [rolling, setRolling] = useState<RollableSkill | null>(null)
   const [rollVersion, setRollVersion] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({})
 
   const safeSave = useCallback(
     (next: Character) => {
@@ -157,6 +160,23 @@ function SheetView({ id }: { id: string }) {
     } catch {
       notify('Não foi possível excluir a ficha.', 'danger')
     }
+  }
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End']
+    if (!keys.includes(event.key)) return
+    event.preventDefault()
+
+    const currentIndex = TABS.findIndex((item) => item.id === tab)
+    let nextIndex = currentIndex
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % TABS.length
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + TABS.length) % TABS.length
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = TABS.length - 1
+
+    const nextTab = TABS[nextIndex].id
+    setTab(nextTab)
+    tabRefs.current[nextTab]?.focus()
   }
 
   const addAbility = (ability: Ability) => {
@@ -255,20 +275,27 @@ function SheetView({ id }: { id: string }) {
 
       <section className="panel sheet-tab-panel">
         <div className="panel-head sheet-tab-head">
-          <span className="panel-title">
+          <h2 className="panel-title">
             <FileText size={15} aria-hidden="true" /> Ficha
-          </span>
+          </h2>
           <span className="small muted">Clique em uma perícia para rolar</span>
         </div>
         <div className="sheet-tabs" role="tablist" aria-label="Seções da ficha">
           {TABS.map((item) => (
             <button
               key={item.id}
+              ref={(element) => {
+                tabRefs.current[item.id] = element
+              }}
+              id={`sheet-tab-${item.id}`}
               type="button"
               role="tab"
               aria-selected={tab === item.id}
+              aria-controls={`sheet-panel-${item.id}`}
+              tabIndex={tab === item.id ? 0 : -1}
               className={`sheet-tab${tab === item.id ? ' active' : ''}`}
               onClick={() => setTab(item.id)}
+              onKeyDown={handleTabKeyDown}
             >
               {item.label}
               {item.id === 'abilities' ? ` (${character.abilities.length})` : null}
@@ -277,7 +304,13 @@ function SheetView({ id }: { id: string }) {
           ))}
         </div>
         <div className="panel-body sheet-tab-body">
-          {tab === 'skills' ? (
+          <div
+            id="sheet-panel-skills"
+            role="tabpanel"
+            aria-labelledby="sheet-tab-skills"
+            tabIndex={0}
+            hidden={tab !== 'skills'}
+          >
             <SkillList
               character={character}
               penalties={penalties}
@@ -289,32 +322,56 @@ function SheetView({ id }: { id: string }) {
               }
               onRoll={setRolling}
             />
-          ) : null}
+          </div>
 
-          {tab === 'abilities' ? (
+          <div
+            id="sheet-panel-abilities"
+            role="tabpanel"
+            aria-labelledby="sheet-tab-abilities"
+            tabIndex={0}
+            hidden={tab !== 'abilities'}
+          >
             <AbilityList
               character={character}
               onAdd={addAbility}
               onRemove={removeAbility}
               onChange={update}
             />
-          ) : null}
+          </div>
 
-          {tab === 'inventory' ? (
+          <div
+            id="sheet-panel-inventory"
+            role="tabpanel"
+            aria-labelledby="sheet-tab-inventory"
+            tabIndex={0}
+            hidden={tab !== 'inventory'}
+          >
             <InventoryList items={character.inventory} onChange={setInventory} />
-          ) : null}
+          </div>
 
-          {tab === 'description' ? (
+          <div
+            id="sheet-panel-description"
+            role="tabpanel"
+            aria-labelledby="sheet-tab-description"
+            tabIndex={0}
+            hidden={tab !== 'description'}
+          >
             <NotesPanel character={character} onChange={update} />
-          ) : null}
+          </div>
 
-          {tab === 'history' ? (
+          <div
+            id="sheet-panel-history"
+            role="tabpanel"
+            aria-labelledby="sheet-tab-history"
+            tabIndex={0}
+            hidden={tab !== 'history'}
+          >
             <RollHistory
               characterId={character.id}
               reloadToken={rollVersion}
               onCleared={() => setRollVersion((current) => current + 1)}
             />
-          ) : null}
+          </div>
         </div>
       </section>
 
@@ -352,10 +409,10 @@ function Panel({
   return (
     <section className="panel">
       <div className="panel-head">
-        <span className="panel-title">
+        <h2 className="panel-title">
           {icon}
           {title}
-        </span>
+        </h2>
       </div>
       <div className="panel-body">{children}</div>
     </section>
